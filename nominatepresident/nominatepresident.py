@@ -26,7 +26,7 @@ class PresidentCog(commands.Cog):
             description=f'Vote with 👍 or 👎\nVoting ends in 24 hours.',
             color=0xffd700  # Gold color
         )
-        embed.set_thumbnail(url=user.avatar_url)
+        embed.set_thumbnail(url=user.avatar.url if user.avatar else user.default_avatar.url)
         msg = await ctx.send(embed=embed)
         await msg.add_reaction('👍')
         await msg.add_reaction('👎')
@@ -61,7 +61,7 @@ class PresidentCog(commands.Cog):
             description=f'Congratulations! Please reply with "I accept" or "I decline".',
             color=0x00ff00  # Green color
         )
-        embed.set_thumbnail(url=user.avatar_url)
+        embed.set_thumbnail(url=user.avatar.url if user.avatar else user.default_avatar.url)
         reply_msg = await msg.channel.send(embed=embed)
 
         def check_acceptance(m):
@@ -87,7 +87,7 @@ class PresidentCog(commands.Cog):
             description=f'Better luck next time!',
             color=0xff0000  # Red color
         )
-        embed.set_thumbnail(url=user.avatar_url)
+        embed.set_thumbnail(url=user.avatar.url if user.avatar else user.default_avatar.url)
         await msg.channel.send(embed=embed)
 
 def setup(bot):
