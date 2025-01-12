@@ -1,0 +1,9 @@
+{
+    "name": "RPG",
+    "author": ["Your Name"],
+    "description": "A cog for a role-playing game.",
+    "install_msg": "Thank you for installing the RPG cog! Use `[p]rpgstart` to begin.",
+    "short": "Role-playing game cog",
+    "requirements": [],
+    "tags": ["game", "RPG"]
+}
