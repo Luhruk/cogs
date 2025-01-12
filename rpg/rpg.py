@@ -108,5 +108,5 @@ class RPG(commands.Cog):
             await ctx.send("You don't have any characters yet!")
             return
 
-        character_list = "\n".join([f"{i+1}. {char['name']} ({char['race']}, {char['gender']})" for i, char in enumerate(characters)])
+        character_list = "\n".join([f"{i+1}. {char['name']} ({char['race']}, {char['gender']}) - Level {char['level']}" for i, char in enumerate(characters)])
         await ctx.send(f"Your characters:\n{character_list}")
