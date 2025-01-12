@@ -13,17 +13,16 @@ class RPG(commands.Cog):
         }
         self.config.register_user(**default_user)
 
-    @commands.command()
-    async def createchar(self, ctx, name: str, race: str, gender: str, image_url: str = None, *, backstory: str = "None"):
+    @commands.group()
+    async def char(self, ctx):
+        """Character-related commands."""
+        if ctx.invoked_subcommand is None:
+            await ctx.send_help(ctx.command)
+
+    @char.command()
+    async def create(self, ctx, name: str, race: str, gender: str, image_url: str = None, *, backstory: str = "None"):
         """
         Create your RPG character.
-
-        Parameters:
-        - name: The name of your character.
-        - race: The race of your character (e.g., Human, Elf, Orc).
-        - gender: The gender of your character (e.g., Male, Female, Non-binary).
-        - image_url: (Optional) A URL to an image representing your character.
-        - backstory: (Optional) A backstory for your character.
         """
         characters = await self.config.user(ctx.author).characters()
         
@@ -45,8 +44,8 @@ class RPG(commands.Cog):
 
         await ctx.send(f"Character created! You now have {len(characters)} characters.")
 
-    @commands.command()
-    async def charinfo(self, ctx):
+    @char.command()
+    async def info(self, ctx):
         """View your active character's information."""
         characters = await self.config.user(ctx.author).characters()
         active_character_index = await self.config.user(ctx.author).active_character()
@@ -72,11 +71,9 @@ class RPG(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @char.command()
     async def setactive(self, ctx, index: int):
-        """
-        Set your active character by choosing its index.
-        """
+        """Set your active character by choosing its index."""
         characters = await self.config.user(ctx.author).characters()
         
         if index < 1 or index > len(characters):
@@ -86,11 +83,9 @@ class RPG(commands.Cog):
         await self.config.user(ctx.author).active_character.set(index - 1)
         await ctx.send(f"Character {characters[index - 1]['name']} is now your active character!")
 
-    @commands.command()
-    async def deletechar(self, ctx, index: int):
-        """
-        Delete a specific character by index.
-        """
+    @char.command()
+    async def delete(self, ctx, index: int):
+        """Delete a specific character by index."""
         characters = await self.config.user(ctx.author).characters()
 
         if index < 1 or index > len(characters):
