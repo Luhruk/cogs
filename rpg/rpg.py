@@ -23,33 +23,37 @@ class RPG(commands.Cog):
         - gender: The gender of your character (e.g., Male, Female, Non-binary).
         - backstory: (Optional) A backstory for your character.
         """
-        async with self.config.user(ctx.author).character() as character:
-            if character:
-                await ctx.send("You already have a character! Use `[p]deletechar` to start over.")
-                return
+        # Retrieve the user's current character data
+        character = await self.config.user(ctx.author).character()
+        if character:
+            await ctx.send("You already have a character! Use `[p]deletechar` to start over.")
+            return
 
-            # Create the character
-            character = {
-                "name": name,
-                "race": race.capitalize(),
-                "gender": gender.capitalize(),
-                "backstory": backstory,
-                "level": 1,
-                "health": 100,
-                "strength": 10,
-                "experience": 0,
-            }
+        # Create the character
+        character = {
+            "name": name,
+            "race": race.capitalize(),
+            "gender": gender.capitalize(),
+            "backstory": backstory,
+            "level": 1,
+            "health": 100,
+            "strength": 10,
+            "experience": 0,
+        }
 
-            await ctx.send(
-                f"Character created!\n"
-                f"Name: **{character['name']}**\n"
-                f"Race: **{character['race']}**\n"
-                f"Gender: **{character['gender']}**\n"
-                f"Backstory: **{character['backstory']}**\n"
-                f"Level: **{character['level']}**\n"
-                f"Health: **{character['health']}**\n"
-                f"Strength: **{character['strength']}**"
-            )
+        # Save the character to the config
+        await self.config.user(ctx.author).character.set(character)
+
+        await ctx.send(
+            f"Character created!\n"
+            f"Name: **{character['name']}**\n"
+            f"Race: **{character['race']}**\n"
+            f"Gender: **{character['gender']}**\n"
+            f"Backstory: **{character['backstory']}**\n"
+            f"Level: **{character['level']}**\n"
+            f"Health: **{character['health']}**\n"
+            f"Strength: **{character['strength']}**"
+        )
 
     @commands.command()
     async def charinfo(self, ctx):
@@ -70,4 +74,3 @@ class RPG(commands.Cog):
         embed.add_field(name="Experience", value=character["experience"], inline=True)
 
         await ctx.send(embed=embed)
-
