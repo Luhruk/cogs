@@ -13,17 +13,14 @@ class RPG(commands.Cog):
         }
         self.config.register_user(**default_user)
 
-    @commands.group()
+    @commands.group(invoke_without_command=True)
     async def char(self, ctx):
         """Character-related commands."""
-        if ctx.invoked_subcommand is None:
-            await ctx.send_help(ctx.command)
+        await ctx.send_help(ctx.command)
 
     @char.command()
     async def create(self, ctx, name: str, race: str, gender: str, image_url: str = None, *, backstory: str = "None"):
-        """
-        Create your RPG character.
-        """
+        """Create your RPG character."""
         characters = await self.config.user(ctx.author).characters()
         
         # Check if a character already exists
@@ -101,3 +98,15 @@ class RPG(commands.Cog):
             await self.config.user(ctx.author).active_character.set(None)
 
         await ctx.send(f"Character {deleted_character['name']} has been deleted.")
+
+    @char.command()
+    async def list(self, ctx):
+        """List all your characters."""
+        characters = await self.config.user(ctx.author).characters()
+
+        if not characters:
+            await ctx.send("You don't have any characters yet!")
+            return
+
+        character_list = "\n".join([f"{i+1}. {char['name']} ({char['race']}, {char['gender']})" for i, char in enumerate(characters)])
+        await ctx.send(f"Your characters:\n{character_list}")
