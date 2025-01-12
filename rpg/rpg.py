@@ -72,8 +72,8 @@ class RPG(commands.Cog):
         embed.add_field(name="Strength", value=character["strength"], inline=True)
         embed.add_field(name="Experience", value=character["experience"], inline=True)
 
-        # Add the image to the embed if it exists
-        if character["image_url"]:
+        # Safely check if 'image_url' exists before using it
+        if character.get("image_url"):
             embed.set_thumbnail(url=character["image_url"])
 
         await ctx.send(embed=embed)
