@@ -8,7 +8,8 @@ class RPG(commands.Cog):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=1234567890, force_registration=True)
         default_user = {
-            "character": None,  # Stores the character data
+            "characters": [],  # Stores a list of character data
+            "active_character": None,  # The active character index
         }
         self.config.register_user(**default_user)
 
@@ -24,11 +25,9 @@ class RPG(commands.Cog):
         - image_url: (Optional) A URL to an image representing your character.
         - backstory: (Optional) A backstory for your character.
         """
-        character = await self.config.user(ctx.author).character()
-        if character:
-            await ctx.send("You already have a character! Use `[p]deletechar` to start over.")
-            return
-
+        characters = await self.config.user(ctx.author).characters()
+        
+        # Check if a character already exists
         character = {
             "name": name,
             "race": race.capitalize(),
@@ -41,26 +40,22 @@ class RPG(commands.Cog):
             "experience": 0,
         }
 
-        await self.config.user(ctx.author).character.set(character)
+        characters.append(character)
+        await self.config.user(ctx.author).characters.set(characters)
 
-        await ctx.send(
-            f"Character created!\n"
-            f"Name: **{character['name']}**\n"
-            f"Race: **{character['race']}**\n"
-            f"Gender: **{character['gender']}**\n"
-            f"Backstory: **{character['backstory']}**\n"
-            f"Level: **{character['level']}**\n"
-            f"Health: **{character['health']}**\n"
-            f"Strength: **{character['strength']}**"
-        )
+        await ctx.send(f"Character created! You now have {len(characters)} characters.")
 
     @commands.command()
     async def charinfo(self, ctx):
-        """View your character's information."""
-        character = await self.config.user(ctx.author).character()
-        if not character:
-            await ctx.send("You don't have a character yet! Use `[p]createchar` to create one.")
+        """View your active character's information."""
+        characters = await self.config.user(ctx.author).characters()
+        active_character_index = await self.config.user(ctx.author).active_character()
+
+        if active_character_index is None or active_character_index >= len(characters):
+            await ctx.send("You don't have an active character! Use `[p]setactive` to choose one.")
             return
+
+        character = characters[active_character_index]
 
         embed = discord.Embed(title=f"{ctx.author.display_name}'s Character", color=discord.Color.green())
         embed.add_field(name="Name", value=character["name"], inline=False)
@@ -72,35 +67,42 @@ class RPG(commands.Cog):
         embed.add_field(name="Strength", value=character["strength"], inline=True)
         embed.add_field(name="Experience", value=character["experience"], inline=True)
 
-        # Safely check if 'image_url' exists before using it
         if character.get("image_url"):
             embed.set_thumbnail(url=character["image_url"])
 
         await ctx.send(embed=embed)
 
     @commands.command()
-    async def editchar(self, ctx, field: str, *, value: str):
+    async def setactive(self, ctx, index: int):
         """
-        Edit your character's information.
-
-        Parameters:
-        - field: The field to edit (name, race, gender, backstory, image_url).
-        - value: The new value for the field.
+        Set your active character by choosing its index.
         """
-        valid_fields = ["name", "race", "gender", "backstory", "image_url"]
-        field = field.lower()
-
-        if field not in valid_fields:
-            await ctx.send(f"Invalid field! You can only edit: {', '.join(valid_fields)}.")
+        characters = await self.config.user(ctx.author).characters()
+        
+        if index < 1 or index > len(characters):
+            await ctx.send(f"Invalid index! You have {len(characters)} characters.")
             return
 
-        character = await self.config.user(ctx.author).character()
-        if not character:
-            await ctx.send("You don't have a character yet! Use `[p]createchar` to create one.")
+        await self.config.user(ctx.author).active_character.set(index - 1)
+        await ctx.send(f"Character {characters[index - 1]['name']} is now your active character!")
+
+    @commands.command()
+    async def deletechar(self, ctx, index: int):
+        """
+        Delete a specific character by index.
+        """
+        characters = await self.config.user(ctx.author).characters()
+
+        if index < 1 or index > len(characters):
+            await ctx.send(f"Invalid index! You have {len(characters)} characters.")
             return
 
-        # Update the specified field
-        character[field] = value.capitalize() if field in ["name", "race", "gender"] else value
-        await self.config.user(ctx.author).character.set(character)
+        deleted_character = characters.pop(index - 1)
+        await self.config.user(ctx.author).characters.set(characters)
 
-        await ctx.send(f"Your character's {field} has been updated to: **{value}**.")
+        # If the deleted character was the active one, reset the active character
+        active_character_index = await self.config.user(ctx.author).active_character()
+        if active_character_index is not None and active_character_index >= index - 1:
+            await self.config.user(ctx.author).active_character.set(None)
+
+        await ctx.send(f"Character {deleted_character['name']} has been deleted.")
