@@ -1,95 +1,70 @@
 from redbot.core import commands, Config
 import discord
-import asyncio
-
 
 class CharacterCommands:
-    """Character-related commands for the RPG cog."""
-
     def __init__(self, bot, config):
         self.bot = bot
         self.config = config
 
-    def register_to(self, parent_group):
-        """Register all character commands to a parent command group."""
-        @parent_group.command()
-        async def create(ctx):
-            """Interactive character creation."""
-            await self.create(ctx)
-
-        @parent_group.command()
-        async def info(ctx):
-            """View your active character's information."""
-            await self.info(ctx)
-
-        @parent_group.command()
-        async def list(ctx):
-            """List all your characters."""
-            await self.list(ctx)
-
-        @parent_group.command()
-        async def setactive(ctx, index: int):
-            """Set your active character by choosing its index."""
-            await self.setactive(ctx, index)
-
-        @parent_group.command()
-        async def delete(ctx, index: int):
-            """Delete a specific character by index."""
-            await self.delete(ctx)
-
     async def create(self, ctx):
         """Interactive character creation."""
-        character = {}
-        prompts = [
-            ("What would you like your character's name to be?", "name"),
-            ("What is your character's race (e.g., Human, Elf, Orc)?", "race"),
-            ("What is your character's gender?", "gender"),
-            ("What is your character's backstory? (Optional)", "backstory"),
-            ("Provide a URL for your character's image. (Optional)", "image_url"),
-        ]
+        await ctx.send("What would you like your character's name to be?")
+        name = await self.bot.wait_for('message', check=lambda m: m.author == ctx.author)
+        
+        await ctx.send("What is your character's race?")
+        race = await self.bot.wait_for('message', check=lambda m: m.author == ctx.author)
+        
+        await ctx.send("What is your character's gender?")
+        gender = await self.bot.wait_for('message', check=lambda m: m.author == ctx.author)
+        
+        await ctx.send("What is your character's backstory?")
+        backstory = await self.bot.wait_for('message', check=lambda m: m.author == ctx.author)
+        
+        await ctx.send("Do you have an image URL for your character? (Leave blank for none)")
+        image_url = await self.bot.wait_for('message', check=lambda m: m.author == ctx.author)
+        image_url = image_url.content if image_url.content else None
+        
+        character = {
+            "name": name.content,
+            "race": race.content.capitalize(),
+            "gender": gender.content.capitalize(),
+            "backstory": backstory.content,
+            "image_url": image_url,
+            "level": 1,
+            "health": 100,
+            "strength": 10,
+            "experience": 0,
+        }
 
-        for prompt, field in prompts:
-            await ctx.send(prompt)
-            try:
-                message = await self.bot.wait_for(
-                    "message", timeout=60, check=lambda m: m.author == ctx.author and m.channel == ctx.channel
-                )
-                character[field] = message.content
-            except asyncio.TimeoutError:
-                await ctx.send("You took too long to respond. Character creation canceled.")
-                return
+        user_data = await self.config.user(ctx.author).all()
+        if "characters" not in user_data:
+            user_data["characters"] = []
+        
+        user_data["characters"].append(character)
+        await self.config.user(ctx.author).set(user_data)
 
-        character["level"] = 1
-        character["health"] = 100
-        character["strength"] = 10
-        character["experience"] = 0
-
-        user_data = await self.config.user(ctx.author).characters()
-        user_data.append(character)
-        await self.config.user(ctx.author).characters.set(user_data)
-
-        await ctx.send(f"Character **{character['name']}** created successfully!")
+        await ctx.send(f"Character created!\nName: {name.content}\nRace: {race.content}\nGender: {gender.content}\nBackstory: {backstory.content}\nLevel: 1")
 
     async def info(self, ctx):
         """View your active character's information."""
         user_data = await self.config.user(ctx.author).all()
-        active_index = user_data.get("active_character")
 
-        if active_index is None:
-            await ctx.send("You have no active character. Use `.char setactive` to choose one.")
+        if not user_data.get("characters"):
+            await ctx.send("You don't have any characters yet! Use `.rpg char create` to create one.")
             return
 
-        try:
-            character = user_data["characters"][active_index]
-        except IndexError:
-            await ctx.send("Your active character index is invalid. Please reset it with `.char setactive`.")
+        active_character_index = user_data.get("active_character")
+        if active_character_index is None or active_character_index >= len(user_data["characters"]):
+            await ctx.send("You don't have an active character set. Use `.rpg char setactive` to set one.")
             return
 
+        character = user_data["characters"][active_character_index]
+        
         embed = discord.Embed(title=f"{ctx.author.display_name}'s Character", color=discord.Color.green())
         embed.add_field(name="Name", value=character["name"], inline=False)
         embed.add_field(name="Race", value=character["race"], inline=False)
         embed.add_field(name="Gender", value=character["gender"], inline=False)
-        embed.add_field(name="Backstory", value=character.get("backstory", "None"), inline=False)
+        embed.add_field(name="Backstory", value=character["backstory"], inline=False)
         embed.add_field(name="Level", value=character["level"], inline=True)
         embed.add_field(name="Health", value=character["health"], inline=True)
         embed.add_field(name="Strength", value=character["strength"], inline=True)
@@ -102,45 +77,48 @@ class CharacterCommands:
 
     async def list(self, ctx):
         """List all your characters."""
-        user_data = await self.config.user(ctx.author).characters()
+        user_data = await self.config.user(ctx.author).all()
 
-        if not user_data:
-            await ctx.send("You have no characters. Use `.char create` to create one.")
+        if not user_data.get("characters"):
+            await ctx.send("You don't have any characters yet! Use `.rpg char create` to create one.")
             return
 
-        embed = discord.Embed(title=f"{ctx.author.display_name}'s Characters", color=discord.Color.blue())
-        for i, character in enumerate(user_data):
-            embed.add_field(
-                name=f"Character {i + 1}",
-                value=f"**Name**: {character['name']}\n**Level**: {character['level']}",
-                inline=False,
-            )
+        embed = discord.Embed(title=f"{ctx.author.display_name}'s Characters", color=discord.Color.green())
+        for i, character in enumerate(user_data["characters"]):
+            embed.add_field(name=f"Character {i+1}: {character['name']}", value=f"Level: {character['level']}", inline=False)
 
         await ctx.send(embed=embed)
 
     async def setactive(self, ctx, index: int):
         """Set your active character by choosing its index."""
-        user_data = await self.config.user(ctx.author).characters()
+        user_data = await self.config.user(ctx.author).all()
 
-        if index < 1 or index > len(user_data):
-            await ctx.send("Invalid character index.")
+        if not user_data.get("characters"):
+            await ctx.send("You don't have any characters yet! Use `.rpg char create` to create one.")
             return
 
-        await self.config.user(ctx.author).active_character.set(index - 1)
+        if index < 1 or index > len(user_data["characters"]):
+            await ctx.send(f"Invalid index! Please choose a number between 1 and {len(user_data['characters'])}.")
+            return
+
+        user_data["active_character"] = index - 1
+        await self.config.user(ctx.author).set(user_data)
+
         await ctx.send(f"Character {index} is now your active character.")
 
     async def delete(self, ctx, index: int):
         """Delete a specific character by index."""
-        user_data = await self.config.user(ctx.author).characters()
+        user_data = await self.config.user(ctx.author).all()
 
-        if index < 1 or index > len(user_data):
-            await ctx.send("Invalid character index.")
+        if not user_data.get("characters"):
+            await ctx.send("You don't have any characters yet! Use `.rpg char create` to create one.")
             return
 
-        deleted_character = user_data.pop(index - 1)
-        await self.config.user(ctx.author).characters.set(user_data)
+        if index < 1 or index > len(user_data["characters"]):
+            await ctx.send(f"Invalid index! Please choose a number between 1 and {len(user_data['characters'])}.")
+            return
 
-        if await self.config.user(ctx.author).active_character() == index - 1:
-            await self.config.user(ctx.author).active_character.set(None)
+        deleted_character = user_data["characters"].pop(index - 1)
+        await self.config.user(ctx.author).set(user_data)
 
-        await ctx.send(f"Character **{deleted_character['name']}** has been deleted.")
+        await ctx.send(f"Character {deleted_character['name']} has been deleted.")
