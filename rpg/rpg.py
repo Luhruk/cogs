@@ -1,28 +1,35 @@
 from redbot.core import commands
-from .character import Character
+from . import character
 
 class RPG(commands.Cog):
-    """Main RPG cog"""
+    """Main RPG commands group."""
 
     def __init__(self, bot):
         self.bot = bot
-        self.character_commands = Character(bot)
+        self.character_commands = character.CharacterCommands(bot)
 
     @commands.group()
-    async def rpg(self, ctx):
-        """Main RPG command group."""
-        if ctx.invoked_subcommand is None:
-            await ctx.send_help(ctx.command)
-
-    @rpg.group()
     async def char(self, ctx):
         """Character-related commands."""
         if ctx.invoked_subcommand is None:
             await ctx.send_help(ctx.command)
 
-    @rpg.command()
-    async def help(self, ctx):
-        """Show help for RPG commands."""
-        await ctx.send_help(ctx.command)
+    @char.command()
+    async def create(self, ctx):
+        """Create a new character."""
+        await self.character_commands.create(ctx)
 
-    # Other RPG-related commands can be added here as needed
+    @char.command()
+    async def info(self, ctx):
+        """View your character's information."""
+        await self.character_commands.info(ctx)
+
+    @char.command()
+    async def list(self, ctx):
+        """List all of your characters."""
+        await self.character_commands.list(ctx)
+
+    @char.command()
+    async def delete(self, ctx, character_name: str):
+        """Delete a specific character."""
+        await self.character_commands.delete(ctx, character_name)
