@@ -15,6 +15,11 @@ class RPG(commands.Cog):
         self.config.register_user(**default_user)
 
     @commands.group(invoke_without_command=True)
+    async def rpg(self, ctx):
+        """Main RPG command group."""
+        await ctx.send_help(ctx.command)
+
+    @rpg.group(invoke_without_command=True)
     async def char(self, ctx):
         """Character-related commands."""
         await ctx.send_help(ctx.command)
