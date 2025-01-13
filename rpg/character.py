@@ -3,19 +3,40 @@ import discord
 import asyncio
 
 
-class CharacterCommands(commands.Cog):
+class CharacterCommands:
     """Character-related commands for the RPG cog."""
 
     def __init__(self, bot, config):
         self.bot = bot
         self.config = config
 
-    @commands.group(name="char", invoke_without_command=True)
-    async def char(self, ctx):
-        """Character-related commands."""
-        await ctx.send_help(ctx.command)
+    def register_to(self, parent_group):
+        """Register all character commands to a parent command group."""
+        @parent_group.command()
+        async def create(ctx):
+            """Interactive character creation."""
+            await self.create(ctx)
 
-    @char.command()
+        @parent_group.command()
+        async def info(ctx):
+            """View your active character's information."""
+            await self.info(ctx)
+
+        @parent_group.command()
+        async def list(ctx):
+            """List all your characters."""
+            await self.list(ctx)
+
+        @parent_group.command()
+        async def setactive(ctx, index: int):
+            """Set your active character by choosing its index."""
+            await self.setactive(ctx, index)
+
+        @parent_group.command()
+        async def delete(ctx, index: int):
+            """Delete a specific character by index."""
+            await self.delete(ctx)
+
     async def create(self, ctx):
         """Interactive character creation."""
         character = {}
@@ -49,7 +70,6 @@ class CharacterCommands(commands.Cog):
 
         await ctx.send(f"Character **{character['name']}** created successfully!")
 
-    @char.command()
     async def info(self, ctx):
         """View your active character's information."""
         user_data = await self.config.user(ctx.author).all()
@@ -80,7 +100,6 @@ class CharacterCommands(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @char.command()
     async def list(self, ctx):
         """List all your characters."""
         user_data = await self.config.user(ctx.author).characters()
@@ -99,7 +118,6 @@ class CharacterCommands(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @char.command()
     async def setactive(self, ctx, index: int):
         """Set your active character by choosing its index."""
         user_data = await self.config.user(ctx.author).characters()
@@ -111,7 +129,6 @@ class CharacterCommands(commands.Cog):
         await self.config.user(ctx.author).active_character.set(index - 1)
         await ctx.send(f"Character {index} is now your active character.")
 
-    @char.command()
     async def delete(self, ctx, index: int):
         """Delete a specific character by index."""
         user_data = await self.config.user(ctx.author).characters()
