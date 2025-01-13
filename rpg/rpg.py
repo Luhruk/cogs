@@ -8,7 +8,12 @@ class RPG(commands.Cog):
         self.bot = bot
         self.character_commands = character.CharacterCommands(bot)
 
-    @commands.group()
+    @commands.group(invoke_without_command=True)
+    async def rpg(self, ctx):
+        """Main RPG commands group."""
+        await ctx.send_help(ctx.command)
+
+    @rpg.group()
     async def char(self, ctx):
         """Character-related commands."""
         if ctx.invoked_subcommand is None:
