@@ -13,11 +13,10 @@ class RPG(commands.Cog):
         """Main RPG commands group."""
         await ctx.send_help(ctx.command)
 
-    @rpg.group()
+    @rpg.group(invoke_without_command=True)
     async def char(self, ctx):
         """Character-related commands."""
-        if ctx.invoked_subcommand is None:
-            await ctx.send_help(ctx.command)
+        await ctx.send_help(ctx.command)
 
     @char.command()
     async def create(self, ctx):
