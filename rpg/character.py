@@ -1,79 +1,64 @@
-from redbot.core import commands, Config
-import discord
+from redbot.core import commands
+from redbot.core import Config
 
 class CharacterCommands(commands.Cog):
-    """Character-related commands."""
-
     def __init__(self, bot):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=1234567890, force_registration=True)
-        self.config.register_user(characters=[])
+        self.config = Config.get_conf(self, 458748958)
+        self.config.register_user(characters={}, active_character="None")
 
-    async def create(self, ctx):
-        """Create a new character interactively."""
-        await ctx.send("What would you like your character name to be?")
-        name = await self.bot.wait_for("message", check=lambda m: m.author == ctx.author)
-        
-        await ctx.send("What is your race?")
-        race = await self.bot.wait_for("message", check=lambda m: m.author == ctx.author)
-        
-        await ctx.send("What is your gender?")
-        gender = await self.bot.wait_for("message", check=lambda m: m.author == ctx.author)
-        
-        await ctx.send("Provide a backstory for your character:")
-        backstory = await self.bot.wait_for("message", check=lambda m: m.author == ctx.author)
-        
-        character = {
-            "name": name.content,
-            "race": race.content,
-            "gender": gender.content,
-            "backstory": backstory.content,
-            "level": 1,
-            "health": 100,
-            "strength": 10,
-            "experience": 0,
-        }
+    @commands.command()
+    async def create(self, ctx, name: str, race: str, gender: str):
+        """Create a new character."""
+        user_data = await self.config.user(ctx.author).all()
+        if name in user_data.get("characters", {}):
+            await ctx.send(f"Character '{name}' already exists.")
+            return
 
-        user_data = await self.config.user(ctx.author).characters()
-        user_data.append(character)
-        await self.config.user(ctx.author).characters.set(user_data)
+        # Create character with basic stats
+        await self.config.user(ctx.author).characters.set_raw(name, value={"race": race, "gender": gender, "level": 1})
+        await ctx.send(f"Character '{name}' created!")
 
-        await ctx.send(f"Character created!\nName: **{name.content}**\nRace: **{race.content}**\nGender: **{gender.content}**\nBackstory: **{backstory.content}**")
+    @commands.command()
+    async def setactive(self, ctx, character_name: str):
+        """Set a character as active."""
+        user_data = await self.config.user(ctx.author).all()
+        
+        # Check if the character exists
+        if character_name not in user_data.get("characters", {}):
+            await ctx.send(f"Character '{character_name}' not found.")
+            return
+        
+        # Set the active character
+        await self.config.user(ctx.author).active_character.set(character_name)
+        await ctx.send(f"Character '{character_name}' is now active!")
 
+    @commands.command()
     async def info(self, ctx):
         """View your character's information."""
-        characters = await self.config.user(ctx.author).characters()
+        user_data = await self.config.user(ctx.author).all()
+        
+        active_character = user_data.get("active_character", "None")
+        characters = user_data.get("characters", {})
+        
         if not characters:
-            await ctx.send("You don't have any characters yet! Use `[p]char create` to create one.")
+            await ctx.send("You have no characters yet. Use `.char create` to create one.")
             return
+        
+        char_info = f"Active Character: {active_character}\n\n"
+        char_info += "\n".join([f"{name}: Level {data['level']}" for name, data in characters.items()])
+        
+        await ctx.send(char_info)
 
-        embed = discord.Embed(title=f"{ctx.author.display_name}'s Characters", color=discord.Color.green())
-        for character in characters:
-            embed.add_field(name=f"{character['name']}", value=f"Level: {character['level']} | Health: {character['health']} | Strength: {character['strength']}", inline=False)
-
-        await ctx.send(embed=embed)
-
+    @commands.command()
     async def list(self, ctx):
-        """List all of your characters."""
-        characters = await self.config.user(ctx.author).characters()
+        """List all characters."""
+        user_data = await self.config.user(ctx.author).all()
+        
+        characters = user_data.get("characters", {})
         if not characters:
-            await ctx.send("You don't have any characters yet! Use `[p]char create` to create one.")
+            await ctx.send("You have no characters yet. Use `.char create` to create one.")
             return
-
-        embed = discord.Embed(title=f"{ctx.author.display_name}'s Characters", color=discord.Color.green())
-        for character in characters:
-            embed.add_field(name=f"{character['name']}", value=f"Level: {character['level']} | Health: {character['health']} | Strength: {character['strength']}", inline=False)
-
-        await ctx.send(embed=embed)
-
-    async def delete(self, ctx, character_name: str):
-        """Delete a specific character."""
-        characters = await self.config.user(ctx.author).characters()
-        character = next((char for char in characters if char["name"].lower() == character_name.lower()), None)
-        if not character:
-            await ctx.send(f"No character named {character_name} found.")
-            return
-
-        characters.remove(character)
-        await self.config.user(ctx.author).characters.set(characters)
-        await ctx.send(f"Character {character_name} has been deleted.")
+        
+        char_list = "\n".join([f"{name}: Level {data['level']}" for name, data in characters.items()])
+        await ctx.send(f"Your characters:\n{char_list}")
