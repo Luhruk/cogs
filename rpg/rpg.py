@@ -14,10 +14,17 @@ class RPG(commands.Cog):
         }
         self.config.register_user(**default_user)
 
-        # Add character-related commands
-        self.bot.add_cog(CharacterCommands(bot, self.config))
+        # Initialize character commands
+        self.character_commands = CharacterCommands(bot, self.config)
+        self.rpg_group = commands.Group(name="char", invoke_without_command=True)
+        self.character_commands.register_to(self.rpg_group)
 
     @commands.group(invoke_without_command=True)
     async def rpg(self, ctx):
         """Main RPG command group."""
         await ctx.send_help(ctx.command)
+
+    @rpg.command()
+    async def char(self, ctx):
+        """Character-related commands."""
+        await ctx.send_help(self.character_commands)
