@@ -1,30 +1,27 @@
-from discord.ext import commands
+from redbot.core import commands  # Import Red's commands framework
+from .character import Character  # Import Character class from character.py
+from .inventory import Inventory  # Import Inventory class from inventory.py
+from .combat import Combat  # Import Combat class from combat.py
+from .quests import Quests  # Import Quests class from quests.py
+from .world import World  # Import World class from world.py
+from .spells import Spells  # Import Spells class from spells.py
+from .data_handler import DataHandler  # Import DataHandler class from data_handler.py
 
-# Import other modules here
-from .character import Character
-from .inventory import Inventory
-from .combat import Combat
-from .quests import Quests
-from .world import World
-from .spells import Spells
-from .data_handler import DataHandler
-
-
-class RPGCog(commands.Cog):
+class RPGCog(commands.Cog):  # Ensure this inherits from commands.Cog
     """A fully functional RPG cog for Red Discord Bot."""
 
     def __init__(self, bot):
         self.bot = bot
         print("Initializing RPGCog...")
 
-        # Initialize components
-        self.data_handler = DataHandler("data/")
-        self.character = Character(self.data_handler)
-        self.inventory = Inventory(self.data_handler)
-        self.combat = Combat(self.data_handler)
-        self.quests = Quests(self.data_handler)
-        self.world = World(self.data_handler)
-        self.spells = Spells(self.data_handler)
+        # Initialize all components
+        self.data_handler = DataHandler("data/")  # Initialize DataHandler with the data folder
+        self.character = Character(self.data_handler)  # Initialize Character
+        self.inventory = Inventory(self.data_handler)  # Initialize Inventory
+        self.combat = Combat(self.data_handler)  # Initialize Combat
+        self.quests = Quests(self.data_handler)  # Initialize Quests
+        self.world = World(self.data_handler)  # Initialize World
+        self.spells = Spells(self.data_handler)  # Initialize Spells
 
         print("RPGCog initialized successfully!")
 
@@ -33,8 +30,7 @@ class RPGCog(commands.Cog):
         """Test command to check if the cog is working."""
         await ctx.send("RPGCog is loaded and working!")
 
-
 # Required setup function for Red
 async def setup(bot):
     """Adds the RPGCog to the bot."""
-    await bot.add_cog(RPGCog(bot))
+    await bot.add_cog(RPGCog(bot))  # Properly add the cog
