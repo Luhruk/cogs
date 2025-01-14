@@ -7,7 +7,10 @@ from .world import World
 from .spells import Spells
 from .data_handler import DataHandler
 
+
 class RPGCog(commands.Cog):
+    """A fully functional RPG cog for Red Discord Bot."""
+
     def __init__(self, bot):
         self.bot = bot
         self.data_handler = DataHandler("data/")
@@ -20,7 +23,10 @@ class RPGCog(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print(f"{self.__class__.__name__} loaded!")
+        print(f"{self.__class__.__name__} loaded successfully!")
 
-def setup(bot):
-    bot.add_cog(RPGCog(bot))
+
+# Required setup function for Red
+async def setup(bot):
+    """Adds the RPGCog to the bot."""
+    await bot.add_cog(RPGCog(bot))
