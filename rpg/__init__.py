@@ -13,6 +13,7 @@ class RPGCog(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        print("Initializing RPGCog...")
         self.data_handler = DataHandler("data/")
         self.character = Character(self.data_handler)
         self.inventory = Inventory(self.data_handler)
@@ -20,13 +21,11 @@ class RPGCog(commands.Cog):
         self.quests = Quests(self.data_handler)
         self.world = World(self.data_handler)
         self.spells = Spells(self.data_handler)
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        print(f"{self.__class__.__name__} loaded successfully!")
+        print("RPGCog initialized successfully!")
 
 
-# Required setup function for Red
 async def setup(bot):
     """Adds the RPGCog to the bot."""
+    print("Setting up RPGCog...")
     await bot.add_cog(RPGCog(bot))
+    print("RPGCog successfully loaded!")
