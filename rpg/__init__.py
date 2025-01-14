@@ -1,4 +1,6 @@
 from discord.ext import commands
+
+# Import other modules here
 from .character import Character
 from .inventory import Inventory
 from .combat import Combat
@@ -14,6 +16,8 @@ class RPGCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         print("Initializing RPGCog...")
+
+        # Initialize components
         self.data_handler = DataHandler("data/")
         self.character = Character(self.data_handler)
         self.inventory = Inventory(self.data_handler)
@@ -21,11 +25,16 @@ class RPGCog(commands.Cog):
         self.quests = Quests(self.data_handler)
         self.world = World(self.data_handler)
         self.spells = Spells(self.data_handler)
+
         print("RPGCog initialized successfully!")
 
+    @commands.command()
+    async def test_rpg(self, ctx):
+        """Test command to check if the cog is working."""
+        await ctx.send("RPGCog is loaded and working!")
 
+
+# Required setup function for Red
 async def setup(bot):
     """Adds the RPGCog to the bot."""
-    print("Setting up RPGCog...")
     await bot.add_cog(RPGCog(bot))
-    print("RPGCog successfully loaded!")
