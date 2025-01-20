@@ -4,7 +4,7 @@ from discord.ext.commands import has_permissions
 
 
 class Reporter(commands.Cog):
-    def __init__(self, bot: commands.Bot):
+    def __init__(self, bot):
         self.bot = bot
         self.forum_channel = None
         self.role_name = None
