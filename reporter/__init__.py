@@ -10,3 +10,4 @@ async def setup(bot):
         log.info("Reporter cog added successfully.")
     except Exception as e:
         log.error(f"Error loading Reporter cog: {e}")
+        raise
