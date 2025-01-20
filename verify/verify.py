@@ -1,5 +1,4 @@
-import asyncpg
-from redbot.core import commands
+from redbot.core import commands, Config
 from discord import Member, Role
 
 class Verify(commands.Cog):
@@ -7,19 +6,13 @@ class Verify(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.db = None
-        self.bot.loop.create_task(self.initialize_db())
-
-    async def initialize_db(self):
-        """Initialize the SQLite database."""
-        self.db = await aiosqlite.connect("verified_users.db")
-        await self.db.execute("""
-        CREATE TABLE IF NOT EXISTS verified_users (
-            user_id INTEGER PRIMARY KEY,
-            username TEXT
-        )
-        """)
-        await self.db.commit()
+        self.config = Config.get_conf(self, identifier=1234567890)
+        default_guild = {
+            "verified_role": None,
+            "punishment_role": None,
+            "trigger_role": None
+        }
+        self.config.register_guild(**default_guild)
 
     async def add_verified_user(self, user_id: int, username: str):
         """Add a user to the verified users database."""
@@ -129,4 +122,3 @@ class Verify(commands.Cog):
         status_message += f"**Trigger Role**: {trigger_role.name if trigger_role else 'Not set'}\n"
 
         await ctx.send(status_message)
-
