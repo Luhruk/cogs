@@ -2,7 +2,6 @@ import discord
 from discord.ext import commands
 from discord.ext.commands import has_permissions
 
-
 class Reporter(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -21,6 +20,7 @@ class Reporter(commands.Cog):
     @commands.command()
     @has_permissions(administrator=True)
     async def reporter_set_forum_channel(self, ctx: commands.Context, channel: discord.TextChannel):
+        """Set the forum channel where threads will be created."""
         self.forum_channel = channel
         await ctx.send(f"Forum channel set to {channel.mention}")
         print(f"[DEBUG] Forum channel set to: {channel.name} ({channel.id})")
@@ -28,11 +28,13 @@ class Reporter(commands.Cog):
     @commands.command()
     @has_permissions(manage_roles=True)
     async def reporter_set_role(self, ctx: commands.Context, role: discord.Role):
+        """Set the role that will be pinged in the forum thread."""
         self.role_name = role.name
         await ctx.send(f"Role for notifications set to {role.name}")
         print(f"[DEBUG] Role set to: {role.name} ({role.id})")
 
     async def create_forum_thread(self, user: discord.User):
+        """Create a private forum thread for the user."""
         if not self.forum_channel:
             return await user.send("No forum channel has been set by the moderators.")
 
@@ -68,6 +70,7 @@ class Reporter(commands.Cog):
         self.locked_threads[user.id] = thread
 
     async def forward_message_to_thread(self, message: discord.Message):
+        """Forward a message to the user's forum thread."""
         thread = self.locked_threads.get(message.author.id)
         if thread:
             embed = discord.Embed(description=message.content, color=discord.Color.green())
@@ -77,6 +80,7 @@ class Reporter(commands.Cog):
     @commands.command()
     @has_permissions(administrator=True)
     async def reporter_close(self, ctx: commands.Context):
+        """Close and lock a forum thread."""
         if ctx.channel.id in [t.id for t in self.locked_threads.values()]:
             self.locked_threads[ctx.channel.id] = True
             await ctx.send("Thread has been closed and locked.")
@@ -85,13 +89,14 @@ class Reporter(commands.Cog):
 
     @commands.command()
     async def reporter_reopen(self, ctx: commands.Context):
+        """Reopen a previously closed forum thread."""
         if ctx.channel.id in self.locked_threads and self.locked_threads[ctx.channel.id]:
             self.locked_threads[ctx.channel.id] = False
             await ctx.send("Thread has been reopened.")
         else:
             await ctx.send("This thread is already open.")
 
-
+# Ensure the cog is properly loaded
 async def setup(bot: commands.Bot):
     await bot.add_cog(Reporter(bot))
     print("[DEBUG] Reporter cog loaded successfully.")
