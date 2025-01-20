@@ -121,27 +121,15 @@ class Cashdrop(commands.Cog):
         if guild_config["channel"] is not None:
             channel = message.guild.get_channel(guild_config["channel"]) or message.channel
 
+        # Default to API fetch unless academic mode is enabled
         if guild_config["academic"]:
             string, answer = self.get_academic_question()
-        elif guild_config["maths"]:
-            string, answer = self.random_calc()
         else:
-            msg = await channel.send(
-                f"Some {await bank.get_currency_name(guild=message.guild)} have fallen! Type `pickup` to pick them up!"
-            )
-            pred = MessagePredicate.equal_to("pickup", channel=channel, user=None)
-            try:
-                pickup_msg: discord.Message = await self.bot.wait_for(
-                    "message", check=pred, timeout=10
-                )
-            except asyncio.TimeoutError:
-                await msg.edit(content="Too slow!")
-                return
-            creds = random.randint(guild_config["credits_min"], guild_config["credits_max"])
-            await msg.edit(
-                content=f"{pickup_msg.author.mention} picked up {creds} {await bank.get_currency_name(guild=message.guild)}!"
-            )
-            await bank.deposit_credits(pickup_msg.author, creds)
+            # Fetch a random academic question from the API
+            string, answer = await self.fetch_academic_question()
+
+        if not string or not answer:
+            await channel.send("Failed to fetch a question. Please try again later.")
             return
 
         msg = await channel.send(string)
