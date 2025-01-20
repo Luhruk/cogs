@@ -1,0 +1,26 @@
+{
+    "author": [
+        "luhruk"
+    ],
+    "install_msg": "Random credits drop, where people can answer questions to get credits!",
+    "name": "CashDrop",
+    "disabled": false,
+    "short": "Random credits drop!",
+    "description": "Random credits drop, where people can answer questions to get credits!",
+    "tags": [
+        "maths",
+        "history",
+        "geography",
+        "science",
+        "drop",
+        "credits",
+        "questions",
+        "random",
+        "random-drop",
+        "random-credits",
+        "random-questions",
+        "economy"
+    ],
+    "min_bot_version": "3.5.0",
+    "hidden": false
+}
