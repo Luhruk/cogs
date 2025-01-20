@@ -1,13 +1,13 @@
 import discord
 from discord.ext import commands
 from discord.ext.commands import has_permissions
-import datetime
 
 
 class Reporter(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.forum_channel = None  # Will hold the forum channel for creating threads
+        self.role_name = None  # Will hold the role name for pinging moderators
         self.locked_threads = {}  # Dictionary to track locked threads
 
     @commands.Cog.listener()
@@ -25,6 +25,13 @@ class Reporter(commands.Cog):
         """Sets the forum channel where threads will be created."""
         self.forum_channel = channel
         await ctx.send(f"Forum channel set to {channel.mention}")
+
+    @commands.command()
+    @has_permissions(manage_roles=True)
+    async def reporter_set_role(self, ctx, role: discord.Role):
+        """Sets the role to be pinged when a new thread is created."""
+        self.role_name = role.name
+        await ctx.send(f"Role for notifications set to {role.name}")
 
     async def create_forum_thread(self, user):
         """Creates a forum thread when a DM is received."""
@@ -54,10 +61,11 @@ class Reporter(commands.Cog):
         embed.set_thumbnail(url=user.avatar.url if user.avatar else None)
         await thread.send(embed=embed)
 
-        # Ping the specified role (this should be set by moderators)
-        role = discord.utils.get(self.forum_channel.guild.roles, name="YourRoleName")  # Replace with dynamic role
-        if role:
-            await thread.send(f"Ping: {role.mention}")
+        # Ping the specified role
+        if self.role_name:
+            role = discord.utils.get(self.forum_channel.guild.roles, name=self.role_name)
+            if role:
+                await thread.send(f"Ping: {role.mention}")
 
         # Store the thread for future message forwarding
         self.locked_threads[user.id] = thread
