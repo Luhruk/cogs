@@ -1,7 +1,8 @@
 import discord
-from discord.ext import commands, tasks
+from discord.ext import commands
 from discord.ext.commands import has_permissions
 import datetime
+
 
 class Reporter(commands.Cog):
     def __init__(self, bot):
@@ -11,8 +12,7 @@ class Reporter(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        if message.guild is None:  # This is a direct message
-            # Check if the thread is locked or not
+        if message.guild is None and not message.author.bot:  # This is a direct message
             if self.locked_threads.get(message.author.id):
                 # Create a new thread if locked
                 await self.create_forum_thread(message.author)
@@ -30,7 +30,7 @@ class Reporter(commands.Cog):
         """Creates a forum thread when a DM is received."""
         if not self.forum_channel:
             return await user.send("No forum channel has been set by the moderators.")
-        
+
         # Create a forum thread
         thread = await self.forum_channel.create_text_channel(
             name=f"{user.name}-{user.id}",
@@ -43,14 +43,19 @@ class Reporter(commands.Cog):
         # Create the embed with the user's profile information
         embed = discord.Embed(
             title=f"User Profile - {user.name}",
-            description=f"User ID: {user.id}\nAccount Created: {user.created_at.strftime('%Y-%m-%d %H:%M:%S')}\nJoined Server: {user.joined_at.strftime('%Y-%m-%d %H:%M:%S')}\nRoles: {', '.join([role.name for role in user.roles if role.name != '@everyone'])}",
+            description=(
+                f"User ID: {user.id}\n"
+                f"Account Created: {user.created_at.strftime('%Y-%m-%d %H:%M:%S')}\n"
+                f"Joined Server: {user.joined_at.strftime('%Y-%m-%d %H:%M:%S')}\n"
+                f"Roles: {', '.join([role.name for role in user.roles if role.name != '@everyone'])}"
+            ),
             color=discord.Color.blue()
         )
-        embed.set_thumbnail(url=user.avatar.url)
+        embed.set_thumbnail(url=user.avatar.url if user.avatar else None)
         await thread.send(embed=embed)
 
         # Ping the specified role (this should be set by moderators)
-        role = discord.utils.get(user.guild.roles, name="YourRoleName")  # Replace with dynamic role
+        role = discord.utils.get(self.forum_channel.guild.roles, name="YourRoleName")  # Replace with dynamic role
         if role:
             await thread.send(f"Ping: {role.mention}")
 
@@ -72,7 +77,7 @@ class Reporter(commands.Cog):
     @has_permissions(administrator=True)
     async def reporter_close(self, ctx):
         """Closes a thread by locking it."""
-        if ctx.channel.id in self.locked_threads.values():
+        if ctx.channel.id in [t.id for t in self.locked_threads.values()]:
             self.locked_threads[ctx.channel.id] = True
             await ctx.send("Thread has been closed and locked.")
         else:
@@ -87,5 +92,6 @@ class Reporter(commands.Cog):
         else:
             await ctx.send("This thread is already open.")
 
-def setup(bot):
-    bot.add_cog(Reporter(bot))
+
+async def setup(bot):
+    await bot.add_cog(Reporter(bot))
