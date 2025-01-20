@@ -2,15 +2,15 @@ import asyncio
 import datetime
 import operator
 import random
-import aiohttp
 
+import aiohttp
 import discord
 from redbot.core import Config, bank, commands
 from redbot.core.utils.predicates import MessagePredicate
 
 
 class Cashdrop(commands.Cog):
-    __version__ = "0.4.0"
+    __version__ = "0.3.1"
     __author__ = "luhruk"
 
     def format_help_for_context(self, ctx):
@@ -23,7 +23,7 @@ class Cashdrop(commands.Cog):
         self.config.register_guild(
             active=False,
             maths=True,
-            academic=False,  # Toggle for academic questions
+            academic=False,  # New toggle for academic questions
             chance=1,
             interval=60,
             timestamp=None,
@@ -51,34 +51,30 @@ class Cashdrop(commands.Cog):
             ],
         }
 
+    def get_academic_question(self):
+        category = random.choice(list(self.question_bank.keys()))
+        question, answer = random.choice(self.question_bank[category])
+        return f"Category: {category.capitalize()}\n{question}", answer
+
     async def fetch_academic_question(self):
         """
         Fetch a random academic question from the Open Trivia Database API.
         """
         url = "https://opentdb.com/api.php?amount=1&type=multiple"
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    question_data = data["results"][0]
-                    question = question_data["question"]
-                    correct_answer = question_data["correct_answer"]
-                    return question, correct_answer
-                else:
-                    return None, None
-
-    async def get_academic_question(self):
-        """
-        Get an academic question, either from the API or the local question bank.
-        """
-        question, answer = await self.fetch_academic_question()
-        if question and answer:
-            return f"Category: Academic\n{question}", answer
-        else:
-            # Fall back to local questions if API fails
-            category = random.choice(list(self.question_bank.keys()))
-            question, answer = random.choice(self.question_bank[category])
-            return f"Category: {category.capitalize()}\n{question}", answer
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        question_data = data["results"][0]
+                        question = question_data["question"]
+                        correct_answer = question_data["correct_answer"]
+                        return question, correct_answer
+                    else:
+                        return None, None
+        except Exception as e:
+            print(f"Error fetching question: {e}")
+            return None, None
 
     def random_calc(self):
         ops = {
@@ -126,7 +122,7 @@ class Cashdrop(commands.Cog):
             channel = message.guild.get_channel(guild_config["channel"]) or message.channel
 
         if guild_config["academic"]:
-            string, answer = await self.get_academic_question()
+            string, answer = self.get_academic_question()
         elif guild_config["maths"]:
             string, answer = self.random_calc()
         else:
@@ -172,6 +168,99 @@ class Cashdrop(commands.Cog):
         Manage the cashdrop
         """
 
+    @_cashdrop.command(name="toggle")
+    async def _toggle(self, ctx):
+        """
+        Toggle the cashdrop
+        """
+        active = await self.config.guild(ctx.guild).active()
+        await self.config.guild(ctx.guild).active.set(not active)
+        await ctx.send(f"Cashdrop is now {'enabled' if not active else 'disabled'}")
+        await self.generate_cache()
+
+    @_cashdrop.command(name="academic")
+    async def _academic(self, ctx, toggle: bool):
+        """
+        Toggle academic testing mode
+        """
+        await self.config.guild(ctx.guild).academic.set(toggle)
+        await ctx.send(f"Academic testing mode is now {'enabled' if toggle else 'disabled'}")
+        await self.generate_cache()
+
+    @_cashdrop.command(name="maths")
+    async def _maths(self, ctx, toggle: bool):
+        """
+        Toggle maths mode
+        """
+        await self.config.guild(ctx.guild).maths.set(toggle)
+        await ctx.send(f"Maths mode is now {'enabled' if toggle else 'disabled'}")
+        await self.generate_cache()
+
+    @_cashdrop.command(name="channel")
+    async def _channel(self, ctx, channel: discord.TextChannel):
+        """
+        Set the channel for the cashdrop
+        """
+        await self.config.guild(ctx.guild).channel.set(channel.id)
+        await ctx.send(f"Channel set to {channel.mention}")
+        await self.generate_cache()
+
+    @_cashdrop.command(name="chance")
+    async def _chance(self, ctx, chance: int):
+        """
+        Set the chance percent of the cashdrop
+        """
+        if 0 <= chance <= 100:
+            await self.config.guild(ctx.guild).chance.set(chance)
+            await ctx.send(f"Chance set to {chance}%")
+            await self.generate_cache()
+        else:
+            await ctx.send("Chance must be between 0 and 100")
+
+    @_cashdrop.command(name="interval")
+    async def _interval(self, ctx, interval: int):
+        """
+        Set the interval in seconds between cashdrops
+        """
+        if interval > 0:
+            await self.config.guild(ctx.guild).interval.set(interval)
+            await ctx.send(f"Interval set to {interval} seconds")
+            await self.generate_cache()
+        else:
+            await ctx.send("Interval must be greater than 0")
+
+    @_cashdrop.command(name="max")
+    async def _max(self, ctx, max: int):
+        """
+        Set the max credits
+        """
+        if max > 0:
+            min_credits = await self.config.guild(ctx.guild).credits_min()
+            if max >= min_credits:
+                await self.config.guild(ctx.guild).credits_max.set(max)
+                await ctx.send(f"Max credits set to {max}")
+                await self.generate_cache()
+            else:
+                await ctx.send("Max must be greater than or equal to min credits")
+        else:
+            await ctx.send("Max must be greater than 0")
+
+    @_cashdrop.command(name="min")
+    async def _min(self, ctx, min: int):
+        """
+        Set the min credits
+        """
+        if min > 0:
+            max_credits = await self.config.guild(ctx.guild).credits_max()
+            if min <= max_credits:
+                await self.config.guild(ctx.guild).credits_min.set(min)
+                await ctx.send(f"Min credits set to {min}")
+                await self.generate_cache()
+            else:
+                await ctx.send("Min must be less than or equal to max credits")
+        else:
+            await ctx.send("Min must be greater than 0")
+
     @_cashdrop.command(name="addquestion")
     async def _add_question(self, ctx, category: str, question: str, answer: str):
         """
@@ -183,10 +272,12 @@ class Cashdrop(commands.Cog):
             await ctx.send(f"Invalid category! Please choose from: {', '.join(valid_categories)}.")
             return
 
+        # Ensure the question and answer are not empty
         if not question or not answer:
             await ctx.send("Both question and answer must be provided.")
             return
 
+        # Add the new question to the bank
         self.question_bank[category.lower()].append((question, answer))
         await ctx.send(f"New question added to the {category.capitalize()} category!")
 
@@ -210,3 +301,14 @@ class Cashdrop(commands.Cog):
         )
 
         await ctx.send(status_message)
+
+    @_cashdrop.command(name="testapi")
+    async def _test_api(self, ctx):
+        """
+        Test the Open Trivia API integration.
+        """
+        question, answer = await self.fetch_academic_question()
+        if question and answer:
+            await ctx.send(f"**Question:** {question}\n**Answer:** {answer}")
+        else:
+            await ctx.send("API request failed or returned no data.")
