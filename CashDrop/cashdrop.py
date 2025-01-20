@@ -239,3 +239,23 @@ class Cashdrop(commands.Cog):
                 await ctx.send("Min must be less than or equal to max credits")
         else:
             await ctx.send("Min must be greater than 0")
+
+    @_cashdrop.command(name="addquestion")
+    async def _add_question(self, ctx, category: str, question: str, answer: str):
+        """
+        Add a new question to the academic question bank.
+        """
+        valid_categories = ["history", "geography", "science"]
+        
+        if category.lower() not in valid_categories:
+            await ctx.send(f"Invalid category! Please choose from: {', '.join(valid_categories)}.")
+            return
+        
+        # Ensure the question and answer are not empty
+        if not question or not answer:
+            await ctx.send("Both question and answer must be provided.")
+            return
+
+        # Add the new question to the bank
+        self.question_bank[category.lower()].append((question, answer))
+        await ctx.send(f"New question added to the {category.capitalize()} category!")
