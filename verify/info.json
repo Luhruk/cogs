@@ -1,8 +1,0 @@
-{
-    "author": "luhruk",
-    "description": "A cog for verifying users and assigning roles in a Discord server.",
-    "install_msg": "Thank you for installing the Verify cog. Use `[p]help Verify` for commands.",
-    "short": "User verification cog.",
-    "requirements": [],
-    "tags": ["verification", "roles", "discord"]
-}
