@@ -1,5 +1,5 @@
-# verify.py
-from redbot.core import commands, Config
+import asyncpg
+from redbot.core import commands
 from discord import Member, Role
 
 class Verify(commands.Cog):
@@ -7,13 +7,35 @@ class Verify(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=1234567890)
-        default_guild = {
-            "verified_role": None,
-            "punishment_role": None,
-            "trigger_role": None
-        }
-        self.config.register_guild(**default_guild)
+        self.db = None
+        self.bot.loop.create_task(self.initialize_db())
+
+    async def initialize_db(self):
+        """Initialize the SQLite database."""
+        self.db = await aiosqlite.connect("verified_users.db")
+        await self.db.execute("""
+        CREATE TABLE IF NOT EXISTS verified_users (
+            user_id INTEGER PRIMARY KEY,
+            username TEXT
+        )
+        """)
+        await self.db.commit()
+
+    async def add_verified_user(self, user_id: int, username: str):
+        """Add a user to the verified users database."""
+        await self.db.execute("INSERT INTO verified_users (user_id, username) VALUES (?, ?)", (user_id, username))
+        await self.db.commit()
+
+    async def remove_verified_user(self, user_id: int):
+        """Remove a user from the verified users database."""
+        await self.db.execute("DELETE FROM verified_users WHERE user_id = ?", (user_id,))
+        await self.db.commit()
+
+    async def is_verified(self, user_id: int) -> bool:
+        """Check if a user is verified."""
+        async with self.db.execute("SELECT 1 FROM verified_users WHERE user_id = ?", (user_id,)) as cursor:
+            result = await cursor.fetchone()
+            return result is not None
 
     @commands.guild_only()
     @commands.admin_or_permissions(manage_roles=True)
@@ -40,39 +62,71 @@ class Verify(commands.Cog):
         await ctx.send(f"Trigger role set to: {role.name}")
 
     @commands.Cog.listener()
-    async def on_member_update(self, before: Member, after: Member):
-        if before.guild != after.guild:
-            return
+    async def on_member_join(self, member: Member):
+        """Handle member join and assign trigger role to alt accounts."""
+        trigger_role_id = await self.config.guild(member.guild).trigger_role()
+        verified_role_id = await self.config.guild(member.guild).verified_role()
+        punishment_role_id = await self.config.guild(member.guild).punishment_role()
 
-        guild_config = await self.config.guild(after.guild).all()
-        trigger_role_id = guild_config["trigger_role"]
-        verified_role_id = guild_config["verified_role"]
-        punishment_role_id = guild_config["punishment_role"]
+        if await self.is_verified(member.id):
+            return  # Verified users can join without issue
 
-        if not (trigger_role_id and verified_role_id and punishment_role_id):
-            return
+        # Assign trigger role to alt accounts
+        trigger_role = member.guild.get_role(trigger_role_id)
+        if trigger_role:
+            await member.add_roles(trigger_role, reason="User is unverified.")
 
-        trigger_role = after.guild.get_role(trigger_role_id)
-        verified_role = after.guild.get_role(verified_role_id)
-        punishment_role = after.guild.get_role(punishment_role_id)
-
-        if trigger_role in after.roles and verified_role not in after.roles:
-            if punishment_role not in after.roles:
-                await after.add_roles(punishment_role, reason="User lacks verification.")
+        # Assign punishment role if the user lacks verification
+        punishment_role = member.guild.get_role(punishment_role_id)
+        if punishment_role:
+            await member.add_roles(punishment_role, reason="User lacks verification.")
 
     @commands.guild_only()
     @commands.command()
     async def verify(self, ctx, member: Member):
         """Manually verify a user."""
         verified_role_id = await self.config.guild(ctx.guild).verified_role()
-        if not verified_role_id:
-            await ctx.send("Verified role is not set.")
-            return
-
         verified_role = ctx.guild.get_role(verified_role_id)
         if not verified_role:
             await ctx.send("Verified role no longer exists.")
             return
 
+        # Add the verified role to the user
         await member.add_roles(verified_role, reason="Manually verified by admin.")
+
+        # Add the user to the database
+        await self.add_verified_user(member.id, member.name)
+
         await ctx.send(f"{member.display_name} has been verified.")
+
+    @commands.guild_only()
+    @commands.command()
+    async def unlink(self, ctx, member: Member):
+        """Remove a user's verified status."""
+        await self.remove_verified_user(member.id)
+        await ctx.send(f"{member.display_name} has been unverified.")
+
+    @commands.guild_only()
+    @commands.command()
+    async def status(self, ctx):
+        """Show the current configuration status for the verification system."""
+        # Retrieve the settings from the configuration
+        guild_config = await self.config.guild(ctx.guild).all()
+        
+        verified_role_id = guild_config["verified_role"]
+        punishment_role_id = guild_config["punishment_role"]
+        trigger_role_id = guild_config["trigger_role"]
+
+        # Get the roles from the guild
+        verified_role = ctx.guild.get_role(verified_role_id) if verified_role_id else None
+        punishment_role = ctx.guild.get_role(punishment_role_id) if punishment_role_id else None
+        trigger_role = ctx.guild.get_role(trigger_role_id) if trigger_role_id else None
+
+        # Build the status message
+        status_message = "Verification System Status:\n"
+        status_message += f"**Verified Role**: {verified_role.name if verified_role else 'Not set'}\n"
+        status_message += f"**Punishment Role**: {punishment_role.name if punishment_role else 'Not set'}\n"
+        status_message += f"**Trigger Role**: {trigger_role.name if trigger_role else 'Not set'}\n"
+
+        await ctx.send(status_message)
+
