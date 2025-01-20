@@ -9,6 +9,12 @@ class Reporter(commands.Cog):
         self.role_name = None
         self.locked_threads = {}
         print("[DEBUG] Reporter cog initialized. Commands should now be registered.")
+        
+        # Manually register commands
+        self.bot.add_command(self.reporter_set_forum_channel)
+        self.bot.add_command(self.reporter_set_role)
+        self.bot.add_command(self.reporter_close)
+        self.bot.add_command(self.reporter_reopen)
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
