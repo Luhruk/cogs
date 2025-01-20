@@ -106,4 +106,7 @@ async def setup(bot: commands.Bot):
     print("[DEBUG] Setting up Reporter cog...")
     await bot.add_cog(Reporter(bot))
     print("[DEBUG] Reporter cog loaded successfully.")
-    print(f"[DEBUG] Registered commands: {', '.join([command.name for command in bot.commands])}")
+    
+    # Check if the cog is loaded
+    print(f"[DEBUG] Loaded cogs: {', '.join(bot.cogs)}")
+
