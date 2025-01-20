@@ -43,7 +43,7 @@ class Reporter(commands.Cog):
         # Create the embed with the user's profile information
         embed = discord.Embed(
             title=f"User Profile - {user.name}",
-            description=f"User ID: {user.id}\nAccount Created: {user.created_at.strftime('%Y-%m-%d %H:%M:%S')}\nJoined Server: {user.joined_at.strftime('%Y-%m-%d %H:%M:%S')}\nRoles: {', '.join([role.name for role in user.roles if role.name != "@everyone"])}",
+            description=f"User ID: {user.id}\nAccount Created: {user.created_at.strftime('%Y-%m-%d %H:%M:%S')}\nJoined Server: {user.joined_at.strftime('%Y-%m-%d %H:%M:%S')}\nRoles: {', '.join([role.name for role in user.roles if role.name != '@everyone'])}",
             color=discord.Color.blue()
         )
         embed.set_thumbnail(url=user.avatar.url)
