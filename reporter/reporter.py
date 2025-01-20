@@ -21,7 +21,6 @@ class Reporter(commands.Cog):
     @has_permissions(administrator=True)
     async def reporter_set_forum_channel(self, ctx: commands.Context, channel: discord.TextChannel):
         """Set the forum channel where threads will be created."""
-        print("[DEBUG] reporter_set_forum_channel command triggered.")  # Debug log
         self.forum_channel = channel
         await ctx.send(f"Forum channel set to {channel.mention}")
         print(f"[DEBUG] Forum channel set to: {channel.name} ({channel.id})")
@@ -30,7 +29,6 @@ class Reporter(commands.Cog):
     @has_permissions(manage_roles=True)
     async def reporter_set_role(self, ctx: commands.Context, role: discord.Role):
         """Set the role that will be pinged in the forum thread."""
-        print("[DEBUG] reporter_set_role command triggered.")  # Debug log
         self.role_name = role.name
         await ctx.send(f"Role for notifications set to {role.name}")
         print(f"[DEBUG] Role set to: {role.name} ({role.id})")
@@ -83,7 +81,6 @@ class Reporter(commands.Cog):
     @has_permissions(administrator=True)
     async def reporter_close(self, ctx: commands.Context):
         """Close and lock a forum thread."""
-        print("[DEBUG] reporter_close command triggered.")  # Debug log
         if ctx.channel.id in [t.id for t in self.locked_threads.values()]:
             self.locked_threads[ctx.channel.id] = True
             await ctx.send("Thread has been closed and locked.")
@@ -93,7 +90,6 @@ class Reporter(commands.Cog):
     @commands.command()
     async def reporter_reopen(self, ctx: commands.Context):
         """Reopen a previously closed forum thread."""
-        print("[DEBUG] reporter_reopen command triggered.")  # Debug log
         if ctx.channel.id in self.locked_threads and self.locked_threads[ctx.channel.id]:
             self.locked_threads[ctx.channel.id] = False
             await ctx.send("Thread has been reopened.")
@@ -102,5 +98,9 @@ class Reporter(commands.Cog):
 
 # Ensure the cog is properly loaded
 async def setup(bot: commands.Bot):
-    await bot.add_cog(Reporter(bot))
-    print("[DEBUG] Reporter cog loaded successfully.")
+    try:
+        print("[DEBUG] Attempting to add Reporter cog...")
+        await bot.add_cog(Reporter(bot))
+        print("[DEBUG] Reporter cog added successfully.")
+    except Exception as e:
+        print(f"[ERROR] Error adding Reporter cog: {e}")
