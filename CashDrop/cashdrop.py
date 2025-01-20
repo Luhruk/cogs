@@ -10,7 +10,7 @@ from redbot.core.utils.predicates import MessagePredicate
 
 class Cashdrop(commands.Cog):
     __version__ = "0.3.0"
-    __author__ = "flare(flare#0001) with enhancements by ChatGPT"
+    __author__ = "luhruk"
 
     def format_help_for_context(self, ctx):
         pre_processed = super().format_help_for_context(ctx)
