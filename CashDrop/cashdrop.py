@@ -259,3 +259,24 @@ class Cashdrop(commands.Cog):
         # Add the new question to the bank
         self.question_bank[category.lower()].append((question, answer))
         await ctx.send(f"New question added to the {category.capitalize()} category!")
+
+    @_cashdrop.command(name="status")
+    async def _status(self, ctx):
+        """
+        Show the current settings for Cashdrop.
+        """
+        guild_config = await self.config.guild(ctx.guild).all()
+
+        status_message = (
+            f"**Cashdrop Status**\n"
+            f"Active: {'Enabled' if guild_config['active'] else 'Disabled'}\n"
+            f"Maths Mode: {'Enabled' if guild_config['maths'] else 'Disabled'}\n"
+            f"Academic Mode: {'Enabled' if guild_config['academic'] else 'Disabled'}\n"
+            f"Chance: {guild_config['chance']}%\n"
+            f"Interval: {guild_config['interval']} seconds\n"
+            f"Min Credits: {guild_config['credits_min']}\n"
+            f"Max Credits: {guild_config['credits_max']}\n"
+            f"Channel: {guild_config['channel'] if guild_config['channel'] else 'Not set'}"
+        )
+
+        await ctx.send(status_message)
