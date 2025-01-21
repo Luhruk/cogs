@@ -105,8 +105,12 @@ class Modmail(commands.Cog):
         # Archive and lock the thread
         await thread.edit(archived=True, locked=True)
 
-        # Set permissions for the thread
-        await thread.set_permissions(ctx.guild.default_role, send_messages=False, view_channel=False)
+        # Get the parent channel of the thread
+        parent_channel = thread.parent
+
+        if parent_channel:
+            # Set permissions for the parent channel (thread inherits these permissions)
+            await parent_channel.set_permissions(ctx.guild.default_role, send_messages=False, view_channel=False)
 
         await ctx.send(f"Thread {thread.name} has been closed and locked.")
 
