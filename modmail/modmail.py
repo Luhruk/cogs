@@ -73,20 +73,23 @@ class Modmail(commands.Cog):
             thread = await modmail_channel.create_thread(name=thread_name, type=discord.ChannelType.private_thread)
             await thread.add_user(after)
 
-            # Ensure the moderator role is pinged correctly
-            allowed_mentions = AllowedMentions(roles=True, users=True, everyone=False)
+            # Add all members with the moderator role to the thread
             if moderator_role:
-                ping_message = (
-                    f"{moderator_role.mention}, a new modmail thread has been created for {after.mention}.\n"
-                    f"Hello {after.mention}, this is your appeal ticket. Please explain your situation here, "
-                    f"and a moderator will respond shortly."
-                )
-                await thread.send(content=ping_message, allowed_mentions=allowed_mentions)
-            else:
-                await thread.send(
-                    f"Hello {after.mention}, this is your appeal ticket. Please explain your situation here, "
-                    f"and a moderator will respond shortly."
-                )
+                for member in moderator_role.members:
+                    try:
+                        await thread.add_user(member)
+                    except discord.Forbidden:
+                        continue  # Skip members who cannot be added
+
+            # Send a message in the thread
+            allowed_mentions = AllowedMentions(roles=True, users=True, everyone=False)
+            ping_message = (
+                f"Hello {after.mention}, this is your appeal ticket. Please explain your situation here, "
+                f"and a moderator will respond shortly."
+            )
+            if moderator_role:
+                ping_message = f"{moderator_role.mention}, a new modmail thread has been created.\n" + ping_message
+            await thread.send(content=ping_message, allowed_mentions=allowed_mentions)
 
             # Log the creation and save to thread history
             log_channel_id = await self.config.guild(guild).log_channel()
