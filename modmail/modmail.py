@@ -74,8 +74,11 @@ class Modmail(commands.Cog):
             await thread.add_user(after)
             ping_message = f"Hello {after.mention}, this is your appeal ticket. Please explain your situation here, and a moderator will respond shortly."
             if moderator_role:
+                # Get all members with the moderator role
+                moderators = [member for member in guild.members if moderator_role in member.roles]
+                mentions = " ".join([moderator.mention for moderator in moderators])
                 allowed_mentions = AllowedMentions(roles=True, users=True, everyone=False)
-                ping_message = f"Hey {moderator_role.mention}, there is an appeal ticket here.\n" + ping_message
+                ping_message = f"Hey {mentions}, there is an appeal ticket here.\n" + ping_message
                 await thread.send(ping_message, allowed_mentions=allowed_mentions)
 
             # Log the creation and save to thread history
