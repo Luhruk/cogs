@@ -135,7 +135,7 @@ class Modmail(commands.Cog):
         # Archive and lock the thread to make it "inactive"
         await thread.edit(archived=True, locked=True, auto_archive_duration=1440)  # 1440 minutes = 24 hours
 
-        await ctx.send(f"Thread {thread.name} has been closed and locked.")
+        await ctx.send(f"Thread {thread.name} has been archived and locked. It will close within 24 hours. Mods, please do not send anymore messages in this channel.")
 
         # Log the closure and save a .txt transcript
         log_channel_id = await self.config.guild(ctx.guild).log_channel()
