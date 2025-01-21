@@ -1,4 +1,4 @@
-from .modmail import ModMail  # Correct the case to match the class name
+from .modmail import Modmail
 
 async def setup(bot):
-    await bot.add_cog(ModMail(bot))  # Use ModMail with the correct case
+    await bot.add_cog(Modmail(bot))
