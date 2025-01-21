@@ -74,83 +74,108 @@ class Modmail(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.Cog.listener()
-    async def on_member_update(self, before, after):
-        guild = after.guild
-        muted_role_id = await self.config.guild(guild).muted_role()
-        modmail_channel_id = await self.config.guild(guild).modmail_channel()
-        moderator_role_id = await self.config.guild(guild).moderator_role()
+@commands.Cog.listener()
+async def on_member_update(self, before, after):
+    guild = after.guild
+    muted_role_id = await self.config.guild(guild).muted_role()
+    modmail_channel_id = await self.config.guild(guild).modmail_channel()
+    moderator_role_id = await self.config.guild(guild).moderator_role()
 
-        if not muted_role_id or not modmail_channel_id:
-            return
+    if not muted_role_id or not modmail_channel_id:
+        return
 
-        muted_role = get(guild.roles, id=muted_role_id)
-        modmail_channel = guild.get_channel(modmail_channel_id)
-        moderator_role = get(guild.roles, id=moderator_role_id) if moderator_role_id else None
+    muted_role = get(guild.roles, id=muted_role_id)
+    modmail_channel = guild.get_channel(modmail_channel_id)
+    moderator_role = get(guild.roles, id=moderator_role_id) if moderator_role_id else None
 
-        if not muted_role or not modmail_channel:
-            return
+    if not muted_role or not modmail_channel:
+        return
 
-        # Check if the muted role was added
-        if muted_role not in before.roles and muted_role in after.roles:
-            thread_name = f"modmail-{after.name}"
-            # Create a private thread instead of a public one
-            thread = await modmail_channel.create_thread(name=thread_name, type=discord.ChannelType.private_thread)
-            await thread.add_user(after)
-            ping_message = f"Hello {after.mention}, this is your appeal ticket. Please explain your situation here, and a moderator will respond shortly."
-            if moderator_role:
-                allowed_mentions = AllowedMentions(roles=True, users=True, everyone=False)
-                ping_message = f"Hey {moderator_role.mention}, there is an appeal ticket here.\n" + ping_message
-                await thread.send(ping_message, allowed_mentions=allowed_mentions)
+    # Check if the muted role was added
+    if muted_role not in before.roles and muted_role in after.roles:
+        thread_name = f"modmail-{after.name}"
+        # Create a private thread instead of a public one
+        thread = await modmail_channel.create_thread(name=thread_name, type=discord.ChannelType.private_thread)
+        await thread.add_user(after)
+        ping_message = f"Hello {after.mention}, this is your appeal ticket. Please explain your situation here, and a moderator will respond shortly."
+        if moderator_role:
+            allowed_mentions = AllowedMentions(roles=True, users=True, everyone=False)
+            ping_message = f"Hey {moderator_role.mention}, there is an appeal ticket here.\n" + ping_message
+            await thread.send(ping_message, allowed_mentions=allowed_mentions)
 
-            # Log the creation and save to thread history
-            log_channel_id = await self.config.guild(guild).log_channel()
-            if log_channel_id:
-                log_channel = guild.get_channel(log_channel_id)
-                if log_channel:
-                    await log_channel.send(
-                        f"A modmail thread has been created for {after.mention} in {thread.mention}."
-                    )
-            async with self.config.guild(guild).thread_history() as history:
-                history[after.id] = thread.id
-
-    @commands.guild_only()
-    @commands.admin_or_permissions(manage_guild=True)
-    @commands.command()
-    async def closemodmail(self, ctx, thread: discord.Thread = None):
-        """Close a modmail thread (archive and lock it)."""
-        if not thread:
-            thread = ctx.channel
-
-        if not isinstance(thread, discord.Thread) or thread.owner != ctx.guild.me:
-            await ctx.send("This command must be run inside a modmail thread created by me.")
-            return
-
-        # Archive and lock the thread to make it "inactive"
-        await thread.edit(archived=True, locked=True, auto_archive_duration=1440)  # 1440 minutes = 24 hours
-
-        await ctx.send(f"Thread {thread.name} has been closed and locked.")
-
-        # Log the closure and save a .txt transcript
-        log_channel_id = await self.config.guild(ctx.guild).log_channel()
+        # Log the creation and save to thread history
+        log_channel_id = await self.config.guild(guild).log_channel()
         if log_channel_id:
-            log_channel = ctx.guild.get_channel(log_channel_id)
+            log_channel = guild.get_channel(log_channel_id)
             if log_channel:
-                transcript = [
-                    f"[{msg.created_at}] {msg.author}: {msg.content}"
-                    async for msg in thread.history(limit=None)
-                ]
-                transcript_text = "\n".join(transcript)
-                transcript_file = discord.File(fp=io.StringIO(transcript_text), filename=f"{thread.name}.txt")
-                await log_channel.send(
-                    f"Thread {thread.name} was closed by {ctx.author.mention}.", file=transcript_file
+                embed = discord.Embed(
+                    title="Modmail Thread Opened",
+                    description=f"A modmail thread has been created for {after.mention} in {thread.mention}.",
+                    color=discord.Color.green()
                 )
+                embed.add_field(name="Thread Name", value=thread_name, inline=False)
+                embed.add_field(name="Created by", value=after.mention, inline=False)
+                await log_channel.send(embed=embed)
 
-        # Remove thread from history
-        async with self.config.guild(ctx.guild).thread_history() as history:
-            user_id = next((uid for uid, tid in history.items() if tid == thread.id), None)
-            if user_id:
-                del history[user_id]
+        async with self.config.guild(guild).thread_history() as history:
+            history[after.id] = thread.id
+
+@commands.guild_only()
+@commands.admin_or_permissions(manage_guild=True)
+@commands.command()
+async def closemodmail(self, ctx, thread: discord.Thread = None):
+    """Close a modmail thread (archive and lock it)."""
+    if not thread:
+        thread = ctx.channel
+
+    if not isinstance(thread, discord.Thread) or thread.owner != ctx.guild.me:
+        await ctx.send("This command must be run inside a modmail thread created by me.")
+        return
+
+    # Archive and lock the thread to make it "inactive"
+    await thread.edit(archived=True, locked=True, auto_archive_duration=1440)  # 1440 minutes = 24 hours
+
+    await ctx.send(f"Thread {thread.name} has been closed and locked.")
+
+    # Log the closure and save a .txt transcript
+    log_channel_id = await self.config.guild(ctx.guild).log_channel()
+    if log_channel_id:
+        log_channel = ctx.guild.get_channel(log_channel_id)
+        if log_channel:
+            transcript = [
+                f"[{msg.created_at}] {msg.author}: {msg.content}"
+                async for msg in thread.history(limit=None)
+            ]
+            transcript_text = "\n".join(transcript)
+            transcript_file = discord.File(fp=io.StringIO(transcript_text), filename=f"{thread.name}.txt")
+            
+            # Find the previous embed message to update
+            async for message in log_channel.history(limit=100):
+                if message.embeds and message.embeds[0].title == "Modmail Thread Opened" and message.embeds[0].description == f"A modmail thread has been created for {thread.owner.mention} in {thread.mention}.":
+                    embed = message.embeds[0]
+                    embed.title = "Modmail Thread Closed"
+                    embed.description = f"Thread {thread.mention} has been closed by {ctx.author.mention}."
+                    embed.color = discord.Color.red()
+                    embed.set_footer(text="Ticket closed")
+                    await message.edit(embed=embed)
+                    break
+            else:
+                # If no previous embed was found, send a new one
+                embed = discord.Embed(
+                    title="Modmail Thread Closed",
+                    description=f"Thread {thread.mention} has been closed by {ctx.author.mention}.",
+                    color=discord.Color.red()
+                )
+                await log_channel.send(embed=embed)
+
+            await log_channel.send(file=transcript_file)
+
+    # Remove thread from history
+    async with self.config.guild(ctx.guild).thread_history() as history:
+        user_id = next((uid for uid, tid in history.items() if tid == thread.id), None)
+        if user_id:
+            del history[user_id]
+
 
     @commands.guild_only()
     @commands.admin_or_permissions(manage_guild=True)
