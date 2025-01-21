@@ -50,6 +50,30 @@ class Modmail(commands.Cog):
         await self.config.guild(ctx.guild).moderator_role.set(role.id)
         await ctx.send(f"Moderator role set to {role.name}.")
 
+    @commands.guild_only()
+    @commands.admin_or_permissions(manage_guild=True)
+    @commands.command()
+    async def modmailstatus(self, ctx):
+        """Show the current modmail settings."""
+        guild = ctx.guild
+        muted_role_id = await self.config.guild(guild).muted_role()
+        modmail_channel_id = await self.config.guild(guild).modmail_channel()
+        log_channel_id = await self.config.guild(guild).log_channel()
+        moderator_role_id = await self.config.guild(guild).moderator_role()
+
+        muted_role = get(guild.roles, id=muted_role_id) if muted_role_id else None
+        modmail_channel = guild.get_channel(modmail_channel_id) if modmail_channel_id else None
+        log_channel = guild.get_channel(log_channel_id) if log_channel_id else None
+        moderator_role = get(guild.roles, id=moderator_role_id) if moderator_role_id else None
+
+        embed = discord.Embed(title="Modmail Settings", color=discord.Color.blue())
+        embed.add_field(name="Muted Role", value=muted_role.name if muted_role else "Not Set", inline=False)
+        embed.add_field(name="Modmail Channel", value=modmail_channel.mention if modmail_channel else "Not Set", inline=False)
+        embed.add_field(name="Log Channel", value=log_channel.mention if log_channel else "Not Set", inline=False)
+        embed.add_field(name="Moderator Role", value=moderator_role.name if moderator_role else "Not Set", inline=False)
+
+        await ctx.send(embed=embed)
+
     @commands.Cog.listener()
     async def on_member_update(self, before, after):
         guild = after.guild
