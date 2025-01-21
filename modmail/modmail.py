@@ -72,24 +72,11 @@ class Modmail(commands.Cog):
             thread_name = f"modmail-{after.name}"
             thread = await modmail_channel.create_thread(name=thread_name, type=discord.ChannelType.private_thread)
             await thread.add_user(after)
-
-            # Add all members with the moderator role to the thread
+            ping_message = f"Hello {after.mention}, this is your appeal ticket. Please explain your situation here, and a moderator will respond shortly."
             if moderator_role:
-                for member in moderator_role.members:
-                    try:
-                        await thread.add_user(member)
-                    except discord.Forbidden:
-                        continue  # Skip members who cannot be added
-
-            # Send a message in the thread
-            allowed_mentions = AllowedMentions(roles=True, users=True, everyone=False)
-            ping_message = (
-                f"Hello {after.mention}, this is your appeal ticket. Please explain your situation here, "
-                f"and a moderator will respond shortly."
-            )
-            if moderator_role:
-                ping_message = f"{moderator_role.mention}, a new modmail thread has been created.\n" + ping_message
-            await thread.send(content=ping_message, allowed_mentions=allowed_mentions)
+                allowed_mentions = AllowedMentions(roles=True, users=True, everyone=False)
+                ping_message = f"Hey {moderator_role.mention}, there is an appeal ticket here.\n" + ping_message
+                await thread.send(ping_message, allowed_mentions=allowed_mentions)
 
             # Log the creation and save to thread history
             log_channel_id = await self.config.guild(guild).log_channel()
@@ -114,7 +101,10 @@ class Modmail(commands.Cog):
             await ctx.send("This command must be run inside a modmail thread created by me.")
             return
 
-        # Archive and lock the thread (this effectively "closes" the thread)
+        # Close the thread (like clicking 'Close Thread' in Discord)
+        await thread.close()
+
+        # Archive and lock the thread (optional, depending on your use case)
         await thread.edit(archived=True, locked=True)
 
         await ctx.send(f"Thread {thread.name} has been closed and locked.")
