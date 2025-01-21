@@ -72,11 +72,12 @@ class Modmail(commands.Cog):
             thread_name = f"modmail-{after.name}"
             thread = await modmail_channel.create_thread(name=thread_name, type=discord.ChannelType.private_thread)
             await thread.add_user(after)
+
             ping_message = f"Hello {after.mention}, this is your appeal ticket. Please explain your situation here, and a moderator will respond shortly."
+            allowed_mentions = AllowedMentions(roles=True, users=True, everyone=False)
             if moderator_role:
-                allowed_mentions = AllowedMentions(roles=True, users=True, everyone=False)
-                ping_message = f"Hey {moderator_role.mention}, there is an appeal ticket here.\n" + ping_message
-                await thread.send(ping_message, allowed_mentions=allowed_mentions)
+                ping_message = f"Hey {moderator_role.mention}, there is an appeal ticket here.\n{ping_message}"
+            await thread.send(ping_message, allowed_mentions=allowed_mentions)
 
             # Log the creation and save to thread history
             log_channel_id = await self.config.guild(guild).log_channel()
