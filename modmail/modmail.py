@@ -102,8 +102,12 @@ class Modmail(commands.Cog):
             await ctx.send("This command must be run inside a modmail thread created by me.")
             return
 
-        # Archive and lock the thread (this is correct already)
+        # Archive and lock the thread
         await thread.edit(archived=True, locked=True)
+        
+        # Make sure the permissions are set to restrict interaction
+        await thread.set_permissions(ctx.guild.default_role, send_messages=False, view_channel=False)
+
         await ctx.send(f"Thread {thread.name} has been closed and locked.")
 
         # Log the closure and save a .txt transcript
