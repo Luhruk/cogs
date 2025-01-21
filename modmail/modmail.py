@@ -53,10 +53,17 @@ class ModMail(commands.Cog):
         # Lock and archive the thread
         await thread.edit(archived=True, locked=True)
 
+        # Set permissions to prevent further messages
+        await thread.edit(overwrites={
+            ctx.guild.default_role: discord.PermissionOverwrite(send_messages=False, view_channel=False),
+            self.modmail_threads[thread.id]["user"]: discord.PermissionOverwrite(read_messages=True),
+            discord.utils.get(ctx.guild.roles, id=self.mod_role_id): discord.PermissionOverwrite(read_messages=True),
+        })
+
         # Log the closing of the thread
         log_channel = self.bot.get_channel(self.logging_channel_id)
         with open(f"modmail_{thread.id}.txt", "w") as file:
-            for message in thread.history(limit=100):  # Adjust limit as needed
+            async for message in thread.history(limit=100):  # Adjust limit as needed
                 file.write(f"{message.author}: {message.content}\n")
 
         await log_channel.send(f"Modmail thread closed for {self.modmail_threads[thread.id]['user'].mention}. Transcript saved.")
