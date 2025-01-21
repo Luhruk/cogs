@@ -1,0 +1,8 @@
+{
+    "author": ["luhruk"],
+    "description": "A modmail system that creates threads for muted users, logs actions, and provides thread management commands.",
+    "install_msg": "Thank you for installing the Modmail cog! Use `[p]modmailset` to configure it.",
+    "short": "Modmail for muted users.",
+    "requirements": [],
+    "tags": ["modmail", "moderation", "threads"]
+  }
