@@ -101,10 +101,7 @@ class Modmail(commands.Cog):
             await ctx.send("This command must be run inside a modmail thread created by me.")
             return
 
-        # Close the thread (like clicking 'Close Thread' in Discord)
-        await thread.close()
-
-        # Archive and lock the thread (optional, depending on your use case)
+        # Archive and lock the thread (this effectively "closes" the thread)
         await thread.edit(archived=True, locked=True)
 
         await ctx.send(f"Thread {thread.name} has been closed and locked.")
