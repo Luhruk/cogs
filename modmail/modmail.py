@@ -1,6 +1,7 @@
 from redbot.core import commands, Config
 import discord
 from discord.utils import get
+import io
 
 class Modmail(commands.Cog):
     """Modmail system for handling muted users."""
@@ -107,7 +108,7 @@ class Modmail(commands.Cog):
         if log_channel_id:
             log_channel = ctx.guild.get_channel(log_channel_id)
             if log_channel:
-                transcript = [f"[{msg.created_at}] {msg.author}: {msg.content}" for msg in await thread.history().flatten()]
+                transcript = [f"[{msg.created_at}] {msg.author}: {msg.content}" async for msg in thread.history(limit=None)]
                 transcript_text = "\n".join(transcript)
                 transcript_file = discord.File(fp=io.StringIO(transcript_text), filename=f"{thread.name}.txt")
                 await log_channel.send(f"Thread {thread.name} was closed by {ctx.author.mention}.", file=transcript_file)
