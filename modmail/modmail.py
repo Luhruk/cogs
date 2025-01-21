@@ -126,10 +126,13 @@ class Modmail(commands.Cog):
             await ctx.send("This command must be run inside a modmail thread created by me.")
             return
 
-        # Archive and lock the thread
-        await thread.edit(archived=True, locked=True)
-
-        await ctx.send(f"Thread {thread.name} has been closed and locked.")
+        # Attempt to close the thread properly
+        try:
+            await thread.delete(reason=f"Closed by {ctx.author}")
+            await ctx.send(f"Thread {thread.name} has been successfully closed.")
+        except discord.HTTPException as e:
+            await ctx.send(f"Failed to close the thread: {e}")
+            return
 
         # Log the closure and save a .txt transcript
         log_channel_id = await self.config.guild(ctx.guild).log_channel()
