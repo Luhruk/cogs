@@ -118,7 +118,7 @@ class Modmail(commands.Cog):
     @commands.admin_or_permissions(manage_guild=True)
     @commands.command()
     async def closemodmail(self, ctx, thread: discord.Thread = None):
-        """Close and lock a modmail thread."""
+        """Close a modmail thread (archive and lock it)."""
         if not thread:
             thread = ctx.channel
 
@@ -126,23 +126,25 @@ class Modmail(commands.Cog):
             await ctx.send("This command must be run inside a modmail thread created by me.")
             return
 
-        # Attempt to close the thread properly
-        try:
-            await thread.delete(reason=f"Closed by {ctx.author}")
-            await ctx.send(f"Thread {thread.name} has been successfully closed.")
-        except discord.HTTPException as e:
-            await ctx.send(f"Failed to close the thread: {e}")
-            return
+        # Archive and lock the thread to make it "inactive"
+        await thread.edit(archived=True, locked=True, auto_archive_duration=1440)  # 1440 minutes = 24 hours
+
+        await ctx.send(f"Thread {thread.name} has been closed and locked.")
 
         # Log the closure and save a .txt transcript
         log_channel_id = await self.config.guild(ctx.guild).log_channel()
         if log_channel_id:
             log_channel = ctx.guild.get_channel(log_channel_id)
             if log_channel:
-                transcript = [f"[{msg.created_at}] {msg.author}: {msg.content}" async for msg in thread.history(limit=None)]
+                transcript = [
+                    f"[{msg.created_at}] {msg.author}: {msg.content}"
+                    async for msg in thread.history(limit=None)
+                ]
                 transcript_text = "\n".join(transcript)
                 transcript_file = discord.File(fp=io.StringIO(transcript_text), filename=f"{thread.name}.txt")
-                await log_channel.send(f"Thread {thread.name} was closed by {ctx.author.mention}.", file=transcript_file)
+                await log_channel.send(
+                    f"Thread {thread.name} was closed by {ctx.author.mention}.", file=transcript_file
+                )
 
         # Remove thread from history
         async with self.config.guild(ctx.guild).thread_history() as history:
