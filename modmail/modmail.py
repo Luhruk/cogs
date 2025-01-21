@@ -70,7 +70,8 @@ class Modmail(commands.Cog):
         # Check if the muted role was added
         if muted_role not in before.roles and muted_role in after.roles:
             thread_name = f"modmail-{after.name}"
-            thread = await modmail_channel.create_thread(name=thread_name, type=discord.ChannelType.public_thread)
+            # Create a private thread instead of a public one
+            thread = await modmail_channel.create_thread(name=thread_name, type=discord.ChannelType.private_thread)
             await thread.add_user(after)
             ping_message = f"Hello {after.mention}, this is your appeal ticket. Please explain your situation here, and a moderator will respond shortly."
             if moderator_role:
@@ -93,7 +94,7 @@ class Modmail(commands.Cog):
     @commands.admin_or_permissions(manage_guild=True)
     @commands.command()
     async def closemodmail(self, ctx, thread: discord.Thread = None):
-        """Close a modmail thread."""
+        """Close and lock a modmail thread."""
         if not thread:
             thread = ctx.channel
 
@@ -101,9 +102,9 @@ class Modmail(commands.Cog):
             await ctx.send("This command must be run inside a modmail thread created by me.")
             return
 
-        # Archive and lock the thread
+        # Archive and lock the thread (this is correct already)
         await thread.edit(archived=True, locked=True)
-        await ctx.send(f"Thread {thread.name} has been closed.")
+        await ctx.send(f"Thread {thread.name} has been closed and locked.")
 
         # Log the closure and save a .txt transcript
         log_channel_id = await self.config.guild(ctx.guild).log_channel()
