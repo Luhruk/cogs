@@ -92,38 +92,47 @@ class Modmail(commands.Cog):
     @commands.guild_only()
     @commands.admin_or_permissions(manage_guild=True)
     @commands.command()
-    async def closemodmail(self, ctx, thread: discord.Thread = None):
+    async def closemodmail(
+        self, ctx: commands.Context, thread: typing.Optional[discord.Thread] = None
+    ) -> None:
         """Close and lock a modmail thread."""
-        if not thread:
-            thread = ctx.channel
+        # Automatically detect the thread if not provided
+        if thread is None:
+            thread = discord.utils.get(
+                await ctx.guild.threads(), id=ctx.channel.id
+            )
+            if not thread:
+                raise commands.UserFeedbackCheckFailure("No modmail thread found in this context.")
 
         if not isinstance(thread, discord.Thread) or thread.owner != ctx.guild.me:
-            await ctx.send("This command must be run inside a modmail thread created by me.")
-            return
+            raise commands.UserFeedbackCheckFailure("This command must be run inside a modmail thread created by me.")
 
-        # Close the thread (like clicking 'Close Thread' in Discord)
-        await thread.close()
+        try:
+            # Close the thread
+            await thread.close()
+            await thread.edit(archived=True, locked=True)
 
-        # Archive and lock the thread (optional, depending on your use case)
-        await thread.edit(archived=True, locked=True)
+            # Notify the user
+            await ctx.send(f"Thread {thread.name} has been closed and locked.")
 
-        await ctx.send(f"Thread {thread.name} has been closed and locked.")
+            # Log the closure and save a .txt transcript
+            log_channel_id = await self.config.guild(ctx.guild).log_channel()
+            if log_channel_id:
+                log_channel = ctx.guild.get_channel(log_channel_id)
+                if log_channel:
+                    transcript = [f"[{msg.created_at}] {msg.author}: {msg.content}" async for msg in thread.history(limit=None)]
+                    transcript_text = "\n".join(transcript)
+                    transcript_file = discord.File(fp=io.StringIO(transcript_text), filename=f"{thread.name}.txt")
+                    await log_channel.send(f"Thread {thread.name} was closed by {ctx.author.mention}.", file=transcript_file)
 
-        # Log the closure and save a .txt transcript
-        log_channel_id = await self.config.guild(ctx.guild).log_channel()
-        if log_channel_id:
-            log_channel = ctx.guild.get_channel(log_channel_id)
-            if log_channel:
-                transcript = [f"[{msg.created_at}] {msg.author}: {msg.content}" async for msg in thread.history(limit=None)]
-                transcript_text = "\n".join(transcript)
-                transcript_file = discord.File(fp=io.StringIO(transcript_text), filename=f"{thread.name}.txt")
-                await log_channel.send(f"Thread {thread.name} was closed by {ctx.author.mention}.", file=transcript_file)
+            # Remove thread from history
+            async with self.config.guild(ctx.guild).thread_history() as history:
+                user_id = next((uid for uid, tid in history.items() if tid == thread.id), None)
+                if user_id:
+                    del history[user_id]
 
-        # Remove thread from history
-        async with self.config.guild(ctx.guild).thread_history() as history:
-            user_id = next((uid for uid, tid in history.items() if tid == thread.id), None)
-            if user_id:
-                del history[user_id]
+        except RuntimeError as e:
+            raise commands.UserFeedbackCheckFailure(f"An error occurred while closing the thread: {e}")
 
     @commands.guild_only()
     @commands.admin_or_permissions(manage_guild=True)
