@@ -105,7 +105,9 @@ class Modmail(commands.Cog):
         await thread.edit(archived=True, locked=True)
 
         # Deny permissions for everyone in the thread (this effectively "closes" it)
-        await thread.set_permissions(ctx.guild.default_role, send_messages=False, view_channel=False)
+        parent_channel = thread.parent  # Get the parent channel (TextChannel)
+        if parent_channel:
+            await parent_channel.set_permissions(ctx.guild.default_role, send_messages=False, view_channel=False)
 
         await ctx.send(f"Thread {thread.name} has been closed and locked.", allowed_mentions=discord.AllowedMentions.none())
 
