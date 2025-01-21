@@ -2,6 +2,7 @@ from redbot.core import commands, Config
 import discord
 from discord.utils import get
 import io
+from discord import AllowedMentions
 
 class Modmail(commands.Cog):
     """Modmail system for handling muted users."""
@@ -73,8 +74,9 @@ class Modmail(commands.Cog):
             await thread.add_user(after)
             ping_message = f"Hello {after.mention}, this is your appeal ticket. Please explain your situation here, and a moderator will respond shortly."
             if moderator_role:
+                allowed_mentions = AllowedMentions(roles=True, users=True, everyone=False)
                 ping_message = f"Hey {moderator_role.mention}, there is an appeal ticket here.\n" + ping_message
-            await thread.send(ping_message)
+                await thread.send(ping_message, allowed_mentions=allowed_mentions)
 
             # Log the creation and save to thread history
             log_channel_id = await self.config.guild(guild).log_channel()
