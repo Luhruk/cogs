@@ -104,6 +104,9 @@ class Modmail(commands.Cog):
         # Archive and lock the thread (this simulates closing the thread)
         await thread.edit(archived=True, locked=True)
 
+        # Deny permissions for everyone in the thread (this effectively "closes" it)
+        await thread.set_permissions(ctx.guild.default_role, send_messages=False, view_channel=False)
+
         await ctx.send(f"Thread {thread.name} has been closed and locked.", allowed_mentions=discord.AllowedMentions.none())
 
         # Log the closure and save a .txt transcript
