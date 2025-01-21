@@ -30,25 +30,25 @@ class Modmail(commands.Cog):
     async def mutedrole(self, ctx, role: discord.Role):
         """Set the role that triggers a modmail thread."""
         await self.config.guild(ctx.guild).muted_role.set(role.id)
-        await ctx.send(f"Muted role set to {role.name}.")
+        await ctx.send(f"Muted role set to {role.name}.", allowed_mentions=discord.AllowedMentions.none())
 
     @modmailset.command()
     async def modmailchannel(self, ctx, channel: discord.TextChannel):
         """Set the channel where modmail threads will be created."""
         await self.config.guild(ctx.guild).modmail_channel.set(channel.id)
-        await ctx.send(f"Modmail channel set to {channel.mention}.")
+        await ctx.send(f"Modmail channel set to {channel.mention}.", allowed_mentions=discord.AllowedMentions.none())
 
     @modmailset.command()
     async def logchannel(self, ctx, channel: discord.TextChannel):
         """Set the channel where modmail logs will be sent."""
         await self.config.guild(ctx.guild).log_channel.set(channel.id)
-        await ctx.send(f"Log channel set to {channel.mention}.")
+        await ctx.send(f"Log channel set to {channel.mention}.", allowed_mentions=discord.AllowedMentions.none())
 
     @modmailset.command()
     async def moderatorrole(self, ctx, role: discord.Role):
         """Set the role to be pinged in modmail threads."""
         await self.config.guild(ctx.guild).moderator_role.set(role.id)
-        await ctx.send(f"Moderator role set to {role.name}.")
+        await ctx.send(f"Moderator role set to {role.name}.", allowed_mentions=discord.AllowedMentions.none())
 
     @commands.Cog.listener()
     async def on_member_update(self, before, after):
@@ -87,52 +87,43 @@ class Modmail(commands.Cog):
                         f"A modmail thread has been created for {after.mention} in {thread.mention}."
                     )
             async with self.config.guild(guild).thread_history() as history:
-                history[after.id] = thread.id
+                history.setdefault(after.id, []).append(thread.id)
 
     @commands.guild_only()
     @commands.admin_or_permissions(manage_guild=True)
     @commands.command()
-    async def closemodmail(
-        self, ctx: commands.Context, thread: typing.Optional[discord.Thread] = None
-    ) -> None:
+    async def closemodmail(self, ctx, thread: discord.Thread = None):
         """Close and lock a modmail thread."""
-        # Automatically detect the thread if not provided
-        if thread is None:
-            thread = discord.utils.get(
-                await ctx.guild.threads(), id=ctx.channel.id
-            )
-            if not thread:
-                raise commands.UserFeedbackCheckFailure("No modmail thread found in this context.")
+        if not thread:
+            thread = ctx.channel
 
         if not isinstance(thread, discord.Thread) or thread.owner != ctx.guild.me:
-            raise commands.UserFeedbackCheckFailure("This command must be run inside a modmail thread created by me.")
+            await ctx.send("This command must be run inside a modmail thread created by me.", allowed_mentions=discord.AllowedMentions.none())
+            return
 
-        try:
-            # Close the thread
-            await thread.close()
-            await thread.edit(archived=True, locked=True)
+        # Close the thread (like clicking 'Close Thread' in Discord)
+        await thread.close()
 
-            # Notify the user
-            await ctx.send(f"Thread {thread.name} has been closed and locked.")
+        # Archive and lock the thread (optional, depending on your use case)
+        await thread.edit(archived=True, locked=True)
 
-            # Log the closure and save a .txt transcript
-            log_channel_id = await self.config.guild(ctx.guild).log_channel()
-            if log_channel_id:
-                log_channel = ctx.guild.get_channel(log_channel_id)
-                if log_channel:
-                    transcript = [f"[{msg.created_at}] {msg.author}: {msg.content}" async for msg in thread.history(limit=None)]
-                    transcript_text = "\n".join(transcript)
-                    transcript_file = discord.File(fp=io.StringIO(transcript_text), filename=f"{thread.name}.txt")
-                    await log_channel.send(f"Thread {thread.name} was closed by {ctx.author.mention}.", file=transcript_file)
+        await ctx.send(f"Thread {thread.name} has been closed and locked.", allowed_mentions=discord.AllowedMentions.none())
 
-            # Remove thread from history
-            async with self.config.guild(ctx.guild).thread_history() as history:
-                user_id = next((uid for uid, tid in history.items() if tid == thread.id), None)
-                if user_id:
-                    del history[user_id]
+        # Log the closure and save a .txt transcript
+        log_channel_id = await self.config.guild(ctx.guild).log_channel()
+        if log_channel_id:
+            log_channel = ctx.guild.get_channel(log_channel_id)
+            if log_channel:
+                transcript = [f"[{msg.created_at}] {msg.author}: {msg.content}" async for msg in thread.history(limit=100)]  # Limiting to 100 messages
+                transcript_text = "\n".join(transcript)
+                transcript_file = discord.File(fp=io.StringIO(transcript_text), filename=f"{thread.name}.txt")
+                await log_channel.send(f"Thread {thread.name} was closed by {ctx.author.mention}.", file=transcript_file)
 
-        except RuntimeError as e:
-            raise commands.UserFeedbackCheckFailure(f"An error occurred while closing the thread: {e}")
+        # Remove thread from history
+        async with self.config.guild(ctx.guild).thread_history() as history:
+            user_id = next((uid for uid, tid in history.items() if tid == thread.id), None)
+            if user_id:
+                del history[user_id]
 
     @commands.guild_only()
     @commands.admin_or_permissions(manage_guild=True)
@@ -140,20 +131,18 @@ class Modmail(commands.Cog):
     async def threadhistory(self, ctx, user: discord.Member):
         """Retrieve past modmail threads for a user."""
         thread_history = await self.config.guild(ctx.guild).thread_history()
-        thread_id = thread_history.get(user.id)
+        thread_ids = thread_history.get(user.id)
 
-        if not thread_id:
-            await ctx.send(f"No modmail thread history found for {user.mention}.")
+        if not thread_ids:
+            await ctx.send(f"No modmail thread history found for {user.mention}.", allowed_mentions=discord.AllowedMentions.none())
             return
 
         modmail_channel_id = await self.config.guild(ctx.guild).modmail_channel()
         modmail_channel = ctx.guild.get_channel(modmail_channel_id)
         if not modmail_channel:
-            await ctx.send("The modmail channel is not configured correctly.")
+            await ctx.send("The modmail channel is not configured correctly.", allowed_mentions=discord.AllowedMentions.none())
             return
 
-        thread = discord.utils.get(modmail_channel.threads, id=thread_id)
-        if thread:
-            await ctx.send(f"Thread for {user.mention}: {thread.mention}")
-        else:
-            await ctx.send(f"No active thread found for {user.mention}, but it may have been archived.")
+        threads = [discord.utils.get(modmail_channel.threads, id=tid) for tid in thread_ids]
+        threads_mentions = [f"{thread.mention}" if thread else "Archived thread" for thread in threads]
+        await ctx.send(f"Threads for {user.mention}: {', '.join(threads_mentions)}", allowed_mentions=discord.AllowedMentions.none())
