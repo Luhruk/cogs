@@ -16,21 +16,21 @@ class ReactionReposter(commands.Cog):
         )
         self.reposted_messages = set()  # Set to keep track of reposted messages
 
-    @commands.group()
+    @commands.group(name="starboard")  # Renamed from "reposterset"
     @commands.guild_only()
     @commands.admin()
-    async def reposterset(self, ctx):
-        """Configuration commands for Reaction Reposter."""
+    async def starboard(self, ctx):
+        """Configuration commands for Starboard."""
         if ctx.invoked_subcommand is None:
-            await ctx.send_help(self.reposterset)
+            await ctx.send_help(ctx.command)
 
-    @reposterset.command()
+    @starboard.command()
     async def setchannel(self, ctx, channel: discord.TextChannel):
         """Set the channel where messages will be reposted."""
         await self.config.guild(ctx.guild).target_channel.set(channel.id)
-        await ctx.send(f"Repost channel set to {channel.mention}")
+        await ctx.send(f"Starboard channel set to {channel.mention}")
 
-    @reposterset.command()
+    @starboard.command()
     async def setthreshold(self, ctx, threshold: int):
         """Set the number of reactions required to repost a message."""
         if threshold < 1:
@@ -39,7 +39,7 @@ class ReactionReposter(commands.Cog):
         await self.config.guild(ctx.guild).reaction_threshold.set(threshold)
         await ctx.send(f"Repost threshold set to {threshold} reactions.")
 
-    @reposterset.command()
+    @starboard.command()
     async def excludechannel(self, ctx, channel: discord.TextChannel):
         """Exclude a channel from being reposted."""
         async with self.config.guild(ctx.guild).excluded_channels() as excluded:
@@ -49,7 +49,7 @@ class ReactionReposter(commands.Cog):
             else:
                 await ctx.send(f"{channel.mention} is already excluded.")
 
-    @reposterset.command()
+    @starboard.command()
     async def includechannel(self, ctx, channel: discord.TextChannel):
         """Include a previously excluded channel for reposting."""
         async with self.config.guild(ctx.guild).excluded_channels() as excluded:
@@ -59,7 +59,7 @@ class ReactionReposter(commands.Cog):
             else:
                 await ctx.send(f"{channel.mention} is not excluded.")
 
-    @reposterset.command()
+    @starboard.command()
     async def ignorebot(self, ctx, toggle: bool):
         """Set whether to ignore messages created by the bot."""
         await self.config.guild(ctx.guild).ignore_bot_messages.set(toggle)
