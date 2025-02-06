@@ -1,0 +1,8 @@
+{
+    "author": ["Luhruk"],
+    "description": "A cog to remove a restricted role from a user, allowing them access.",
+    "install_msg": "Thank you for installing the AllowIn cog! Use `[p]setrestricted` to configure the role.",
+    "short": "Manage access by removing a restricted role.",
+    "tags": ["moderation", "roles"],
+    "type": "COG"
+}
