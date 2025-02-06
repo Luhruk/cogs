@@ -1,0 +1,8 @@
+{
+    "author": ["Luhruk"],
+    "description": "A cog to manage quarantine roles.",
+    "install_msg": "Thank you for installing the Quarantine cog! Use `[p]setquarantine` to configure the role.",
+    "short": "Manage quarantine roles.",
+    "tags": ["moderation", "roles"],
+    "type": "COG"
+}
