@@ -1,0 +1,20 @@
+{
+    "author": ["YamiKaitou#8975"],
+    "name": "PayDay",
+    "short": "More PayDay options",
+    "description": "Give bonus credits for daily and other times",
+    "tags": [
+        "utility",
+        "economy",
+        "daily",
+        "payday",
+        "freecredits"
+    ],
+    "requirements": [
+        "tabulate"
+    ],
+    "min_bot_version": "3.5.0",
+    "end_user_data_statement": "This cog does not persistently store end user data. This cog does store Discord UserIDs as needed for operation.",
+    "install_msg": "Thanks for installing the cog. I'm in the Cog Support server if you need help with anything. Make sure you take a look under `[p]pdconfig` before getting started, all commands are turned off by default",
+    "hidden": false
+}
