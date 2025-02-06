@@ -56,7 +56,7 @@ class Cashdrop(commands.Cog):
         question, answer = random.choice(self.question_bank[category])
         return f"Category: {category.capitalize()}\n{question}", answer
 
-   async def fetch_academic_question(self):
+async def fetch_academic_question(self):
     """
     Fetch a random academic question from the Open Trivia Database API.
     """
@@ -87,6 +87,7 @@ class Cashdrop(commands.Cog):
     except Exception as e:
         print(f"Error fetching question: {e}")
         return None, None
+
 
 
     def random_calc(self):
