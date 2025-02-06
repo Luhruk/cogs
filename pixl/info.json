@@ -1,0 +1,40 @@
+{
+  "author": [
+    "Vertyco"
+  ],
+  "description": "Guess pictures before anyone else as sections of it are slowly revealed.",
+  "disabled": false,
+  "end_user_data_statement": "This cog only stores user IDs for its leaderboard.\n\nThis cog can cause rate limiting on larger bots due to it deleting and re-sending updated images frequently.\n\nDOCUMENTATION: https://github.com/vertyco/vrt-cogs/blob/main/pixl/README.md",
+  "hidden": false,
+  "install_msg": "Thank you for installing!",
+  "min_bot_version": "3.4.17",
+  "min_python_version": [
+    3,
+    9,
+    1
+  ],
+  "permissions": [
+    "read_messages",
+    "send_messages",
+    "manage_messages",
+    "embed_links"
+  ],
+  "required_cogs": {},
+  "requirements": [
+    "Pillow",
+    "aiocache",
+    "tabulate"
+  ],
+  "short": "Image guessing game!",
+  "tags": [
+    "fun",
+    "picture",
+    "game",
+    "games",
+    "pictures",
+    "image",
+    "images",
+    "guessing"
+  ],
+  "type": "COG"
+}
