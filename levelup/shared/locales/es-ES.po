@@ -1,0 +1,242 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: vrt-cogs\n"
+"POT-Creation-Date: 2024-07-24 17:08-0400\n"
+"PO-Revision-Date: 2024-12-03 14:58\n"
+"Last-Translator: \n"
+"Language-Team: Spanish\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: redgettext 3.4.2\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Crowdin-Project: vrt-cogs\n"
+"X-Crowdin-Project-ID: 550681\n"
+"X-Crowdin-Language: es-ES\n"
+"X-Crowdin-File: /[vertyco.vrt-cogs] main/levelup/shared/locales/messages.pot\n"
+"X-Crowdin-File-ID: 174\n"
+"Language: es_ES\n"
+
+#: levelup\shared\__init__.py:8
+#, docstring
+msgid "\n"
+"    Subclass all shared metaclassed parts of the cog\n\n"
+"    This includes classes with functions available to other cogs\n"
+"    "
+msgstr "\n"
+"    Subclass all shared metaclassed parts of the cog\n\n"
+"    This includes classes with functions available to other cogs\n"
+"    "
+
+#: levelup\shared\levelups.py:34
+#, docstring
+msgid "Check if a user has leveled up and award roles if needed\n\n"
+"        Args:\n"
+"            guild (discord.Guild): The guild where the leveling up occurred.\n"
+"            member (discord.Member): The member who leveled up.\n"
+"            profile (Profile): The profile of the member.\n"
+"            conf (GuildSettings): The guild settings.\n"
+"            message (t.Optional[discord.Message], optional): The message that triggered the leveling up. Defaults to None.\n"
+"            channel (t.Optional[t.Union[discord.TextChannel, discord.VoiceChannel, discord.Thread, discord.ForumChannel]], optional): The channel where the leveling up occurred. Defaults to None.\n\n"
+"        Returns:\n"
+"            bool: True if the user leveled up, False otherwise.\n"
+"        "
+msgstr ""
+
+#: levelup\shared\levelups.py:72
+msgid "You just reached level {} in {} and obtained the {} role!"
+msgstr "¡Acabas de alcanzar el nivel {} en {} y obtuviste el rol {}!"
+
+#: levelup\shared\levelups.py:78
+msgid "{} just reached level {} and obtained the {} role!"
+msgstr "¡{} acaba de alcanzar el nivel {} y obtuvo el rol {}!"
+
+#: levelup\shared\levelups.py:86
+msgid "You just reached level {} in {}!"
+msgstr "¡Acabas de alcanzar el nivel {} en {}!"
+
+#: levelup\shared\levelups.py:90
+msgid "{} just reached level {}!"
+msgstr "¡{} acaba de alcanzar el nivel {}!"
+
+#: levelup\shared\levelups.py:232
+#, docstring
+msgid "Ensure a user has the correct level roles based on their level and the guild's settings"
+msgstr "Asegúrate de que un usuario tenga los roles de nivel correctos según su nivel y la configuración del servidor"
+
+#: levelup\shared\profile.py:26
+#, docstring
+msgid "Add XP to a user and check for level ups"
+msgstr "Añade XP a un usuario y verifica si sube de nivel"
+
+#: levelup\shared\profile.py:36
+#, docstring
+msgid "Set a user's XP and check for level ups"
+msgstr "Establece el XP de un usuario y verifica si sube de nivel"
+
+#: levelup\shared\profile.py:46
+#, docstring
+msgid "Remove XP from a user and check for level ups"
+msgstr "Elimina XP de un usuario y verifica si sube de nivel"
+
+#: levelup\shared\profile.py:58
+#, docstring
+msgid "\n"
+"        Get a background for a user's profile in the following priority:\n"
+"        - Custom background selected by user\n"
+"        - Banner of user's Discord profile\n"
+"        - Random background\n"
+"        "
+msgstr "\n"
+"        Obtén un fondo para el perfil de un usuario en la siguiente prioridad:\n"
+"        - Fondo personalizado seleccionado por el usuario\n"
+"        - Banner del perfil de Discord del usuario\n"
+"        - Fondo aleatorio\n"
+"        "
+
+#: levelup\shared\profile.py:98
+#, docstring
+msgid "Fetch a user's banner from Discord's API\n\n"
+"        Args:\n"
+"            user_id (int): The ID of the user\n\n"
+"        Returns:\n"
+"            t.Optional[str]: The URL of the user's banner image, or None if no banner is found\n"
+"        "
+msgstr "Obtén el banner de un usuario desde la API de Discord\n\n"
+"        Argumentos:\n"
+"            user_id (int): El ID del usuario\n\n"
+"        Retorna:\n"
+"            t.Optional[str]: La URL de la imagen del banner del usuario, o None si no se encuentra ningún banner\n"
+"        "
+
+#: levelup\shared\profile.py:113
+#, docstring
+msgid "\n"
+"        Get a user's profile as an embed or file\n"
+"        If embed profiles are disabled, a file will be returned, otherwise an embed will be returned\n\n"
+"        Args:\n"
+"            member (discord.Member): The member to get the profile for\n"
+"            reraise (bool, optional): Fetching profiles will normally catch almost all exceptions and try to\n"
+"            handle them silently, this will make them throw an exception. Defaults to False.\n\n"
+"        Returns:\n"
+"            t.Union[discord.Embed, discord.File]: An embed or file containing the user's profile\n"
+"        "
+msgstr "\n"
+"        Obtén el perfil de un usuario como un embed o archivo\n"
+"        Si los perfiles embed están desactivados, se devolverá un archivo, de lo contrario, se devolverá un embed\n\n"
+"        Argumentos:\n"
+"            member (discord.Member): El miembro para obtener el perfil\n"
+"            reraise (bool, opcional): Obtener perfiles normalmente captura casi todas las excepciones e intenta\n"
+"            manejarlas de manera silenciosa, esto hará que lance una excepción. Por defecto es False.\n\n"
+"        Retorna:\n"
+"            t.Union[discord.Embed, discord.File]: Un embed o archivo que contiene el perfil del usuario\n"
+"        "
+
+#: levelup\shared\profile.py:165
+msgid "Level {}\n"
+msgstr "Nivel {}\n"
+
+#: levelup\shared\profile.py:167
+msgid "Prestige {}\n"
+msgstr "Prestigio {}\n"
+
+#: levelup\shared\profile.py:170
+msgid " stars\n"
+msgstr " estrellas\n"
+
+#: levelup\shared\profile.py:171
+msgid " messages sent\n"
+msgstr " mensajes enviados\n"
+
+#: levelup\shared\profile.py:172
+msgid " in voice\n"
+msgstr " en voz\n"
+
+#: levelup\shared\profile.py:174
+msgid " Exp ({} total)\n"
+msgstr " Exp ({} total)\n"
+
+#: levelup\shared\profile.py:188
+msgid "{}'s Profile"
+msgstr "Perfil de {}"
+
+#: levelup\shared\profile.py:192
+msgid "Rank {}, with {}% of the total server Exp"
+msgstr "Rango {}, con el {}% del XP total del servidor"
+
+#: levelup\shared\profile.py:197
+msgid "Progress"
+msgstr "Progreso"
+
+#: levelup\shared\profile.py:320
+#, docstring
+msgid "Cached version of get_user_profile"
+msgstr "Versión en caché de get_user_profile"
+
+#: levelup\shared\weeklyreset.py:22
+#, docstring
+msgid "Announce and reset weekly stats\n\n"
+"        Args:\n"
+"            guild (discord.Guild): The guild where the weekly stats are being reset.\n"
+"            ctx (commands.Context, optional): Sends the announcement embed in the current channel. Defaults to None.\n\n"
+"        Returns:\n"
+"            bool: True if the weekly stats were reset, False otherwise.\n"
+"        "
+msgstr ""
+
+#: levelup\shared\weeklyreset.py:38
+msgid "There are no users in the weekly data yet"
+msgstr "Aún no hay usuarios en los datos semanales"
+
+#: levelup\shared\weeklyreset.py:52
+msgid "There are no users with XP in the weekly data yet"
+msgstr "Aún no hay usuarios con XP en los datos semanales"
+
+#: levelup\shared\weeklyreset.py:76
+msgid "`Total Exp:       `{}\n"
+"`Total Messages:  `{}\n"
+"`Total Stars:     `{}\n"
+"`Total Voicetime: `{}\n"
+"`Next Reset:      `{}"
+msgstr "`Total Exp:       `{}\n"
+"`Total de Mensajes:  `{}\n"
+"`Total de Estrellas:     `{}\n"
+"`Total de Tiempo de voz: `{}\n"
+"`Próximo Reinicio:      `{}"
+
+#: levelup\shared\weeklyreset.py:92
+msgid "Top Weekly Exp Earners"
+msgstr "Principales ganadores de experiencia semanal"
+
+#: levelup\shared\weeklyreset.py:106
+msgid "`Experience: `{}\n"
+msgstr ""
+
+#: levelup\shared\weeklyreset.py:107
+msgid "`Messages:   `{}\n"
+msgstr ""
+
+#: levelup\shared\weeklyreset.py:109
+msgid "`Stars:      `{}\n"
+msgstr ""
+
+#: levelup\shared\weeklyreset.py:111
+msgid "`Voicetime:  `{}\n"
+msgstr ""
+
+#: levelup\shared\weeklyreset.py:138
+msgid "Missing permissions to manage roles"
+msgstr "Faltan permisos para gestionar roles"
+
+#: levelup\shared\weeklyreset.py:150
+msgid "Weekly winner role removal"
+msgstr "Eliminación de roles de ganador semanal"
+
+#: levelup\shared\weeklyreset.py:162
+msgid "Weekly winner role addition"
+msgstr "Adición de roles de ganador semanal"
+
+#: levelup\shared\weeklyreset.py:180
+msgid "Weekly stats have been reset."
+msgstr "Las estadísticas semanales han sido reiniciadas."
+
