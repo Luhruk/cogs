@@ -14,7 +14,7 @@ class Modmail(commands.Cog):
             "muted_role": None,
             "modmail_channel": None,
             "log_channel": None,
-            "moderator_role": None,
+            "moderator_roles": [],  # Change this to a list for multiple roles
             "thread_history": {}
         }
         self.config.register_guild(**default_guild)
@@ -45,10 +45,12 @@ class Modmail(commands.Cog):
         await ctx.send(f"Log channel set to {channel.mention}.")
 
     @modmailset.command()
-    async def moderatorrole(self, ctx, role: discord.Role):
-        """Set the role to be pinged in modmail threads."""
-        await self.config.guild(ctx.guild).moderator_role.set(role.id)
-        await ctx.send(f"Moderator role set to {role.name}.")
+    async def moderatorrole(self, ctx, *roles: discord.Role):
+        """Add one or more roles to be pinged in modmail threads."""
+        role_ids = [role.id for role in roles]
+        await self.config.guild(ctx.guild).moderator_roles.set(role_ids)
+        role_names = [role.name for role in roles]
+        await ctx.send(f"Moderator roles set to: {', '.join(role_names)}.")
 
     @commands.guild_only()
     @commands.admin_or_permissions(manage_guild=True)
@@ -59,18 +61,18 @@ class Modmail(commands.Cog):
         muted_role_id = await self.config.guild(guild).muted_role()
         modmail_channel_id = await self.config.guild(guild).modmail_channel()
         log_channel_id = await self.config.guild(guild).log_channel()
-        moderator_role_id = await self.config.guild(guild).moderator_role()
+        moderator_role_ids = await self.config.guild(guild).moderator_roles()
 
         muted_role = get(guild.roles, id=muted_role_id) if muted_role_id else None
         modmail_channel = guild.get_channel(modmail_channel_id) if modmail_channel_id else None
         log_channel = guild.get_channel(log_channel_id) if log_channel_id else None
-        moderator_role = get(guild.roles, id=moderator_role_id) if moderator_role_id else None
+        moderator_roles = [get(guild.roles, id=role_id) for role_id in moderator_role_ids]
 
         embed = discord.Embed(title="Modmail Settings", color=discord.Color.blue())
         embed.add_field(name="Muted Role", value=muted_role.name if muted_role else "Not Set", inline=False)
         embed.add_field(name="Modmail Channel", value=modmail_channel.mention if modmail_channel else "Not Set", inline=False)
         embed.add_field(name="Log Channel", value=log_channel.mention if log_channel else "Not Set", inline=False)
-        embed.add_field(name="Moderator Role", value=moderator_role.name if moderator_role else "Not Set", inline=False)
+        embed.add_field(name="Moderator Roles", value=", ".join([role.name for role in moderator_roles]) if moderator_roles else "Not Set", inline=False)
 
         await ctx.send(embed=embed)
 
@@ -79,14 +81,14 @@ class Modmail(commands.Cog):
         guild = after.guild
         muted_role_id = await self.config.guild(guild).muted_role()
         modmail_channel_id = await self.config.guild(guild).modmail_channel()
-        moderator_role_id = await self.config.guild(guild).moderator_role()
+        moderator_role_ids = await self.config.guild(guild).moderator_roles()
 
         if not muted_role_id or not modmail_channel_id:
             return
 
         muted_role = get(guild.roles, id=muted_role_id)
         modmail_channel = guild.get_channel(modmail_channel_id)
-        moderator_role = get(guild.roles, id=moderator_role_id) if moderator_role_id else None
+        moderator_roles = [get(guild.roles, id=role_id) for role_id in moderator_role_ids]
 
         if not muted_role or not modmail_channel:
             return
@@ -97,9 +99,9 @@ class Modmail(commands.Cog):
             thread = await modmail_channel.create_thread(name=thread_name, type=discord.ChannelType.private_thread)
             await thread.add_user(after)
             ping_message = f"Hello {after.mention}, this is your appeal ticket. Please explain your situation here, and a moderator will respond shortly."
-            if moderator_role:
+            if moderator_roles:
                 allowed_mentions = AllowedMentions(roles=True, users=True, everyone=False)
-                ping_message = f"Hey {moderator_role.mention}, there is an appeal ticket here. Please be sure to use the `.closemodmail` command when you are done here to close the ticket.\n" + ping_message
+                ping_message = f"Hey {', '.join([role.mention for role in moderator_roles])}, there is an appeal ticket here. Please be sure to use the `.thread close` command when you are done here to close the ticket.\n" + ping_message
                 await thread.send(ping_message, allowed_mentions=allowed_mentions)
 
             log_channel_id = await self.config.guild(guild).log_channel()
