@@ -56,39 +56,25 @@ class Cashdrop(commands.Cog):
         question, answer = random.choice(self.question_bank[category])
         return f"Category: {category.capitalize()}\n{question}", answer
 
-async def fetch_academic_question(self):
-    """
-    Fetch a random academic question from the Open Trivia Database API.
-    """
-    url = "https://opentdb.com/api.php?amount=1&type=multiple"
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    question_data = data["results"][0]
-                    question = question_data["question"]
-                    correct_answer = question_data["correct_answer"]
-                    incorrect_answers = question_data["incorrect_answers"]
-
-                    # Shuffle the correct answer among the incorrect ones
-                    options = incorrect_answers + [correct_answer]
-                    random.shuffle(options)
-
-                    # Format the question to include multiple-choice options
-                    formatted_question = f"**{question}**\n"
-                    formatted_question += "\n".join(
-                        [f"{idx + 1}. {option}" for idx, option in enumerate(options)]
-                    )
-
-                    return formatted_question, correct_answer
-                else:
-                    return None, None
-    except Exception as e:
-        print(f"Error fetching question: {e}")
-        return None, None
-
-
+    async def fetch_academic_question(self):
+        """
+        Fetch a random academic question from the Open Trivia Database API.
+        """
+        url = "https://opentdb.com/api.php?amount=1&type=multiple"
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        question_data = data["results"][0]
+                        question = question_data["question"]
+                        correct_answer = question_data["correct_answer"]
+                        return question, correct_answer
+                    else:
+                        return None, None
+        except Exception as e:
+            print(f"Error fetching question: {e}")
+            return None, None
 
     def random_calc(self):
         ops = {
