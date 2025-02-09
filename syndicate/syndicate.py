@@ -95,7 +95,7 @@ class SyndicatePoints(commands.Cog):
         if not syndicates:
             return
         sorted_syndicates = sorted(syndicates.items(), key=lambda x: x[1], reverse=True)
-        embed = discord.Embed(title="Syndicate Leaderboard", color=discord.Color.blue())
+        embed = discord.Embed(title="Syndicate Leaderboard", color=discord.Color(0xA82DEB))
         for name, points in sorted_syndicates:
             embed.add_field(name=name, value=f"{points} points", inline=False)
         
