@@ -113,7 +113,7 @@ class SyndicatePoints(commands.Cog):
     
     @commands.guild_only()
     @commands.command()
-    async def leaderboard(self, ctx):
+    async def syndicateleaderboard(self, ctx):
         """Post or update the syndicate leaderboard."""
         await self.update_leaderboard(ctx)
         await ctx.send("Leaderboard updated!")
