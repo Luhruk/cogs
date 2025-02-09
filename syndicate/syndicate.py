@@ -1,6 +1,8 @@
 from redbot.core import commands, Config
 from redbot.core.bot import Red
 from typing import Optional
+from discord.utils import get
+
 
 class SyndicatePoints(commands.Cog):
     """A cog to manage syndicates and track points assigned by moderators."""
@@ -13,11 +15,11 @@ class SyndicatePoints(commands.Cog):
     @commands.admin()
     @commands.guild_only()
     @commands.command()
-    async def setmodrole(self, ctx, role_name: str):
+    async def setmodrole(self, ctx, *, role_name: str):
         """Set the moderator role for this cog."""
-        role = next((r for r in ctx.guild.roles if r.name == role_name), None)
+        role = get(ctx.guild.roles, name=role_name)
         if not role:
-            await ctx.send(f"Role `{role_name}` not found.")
+            await ctx.send(f"Role `{role_name}` not found. Make sure you typed it exactly as it appears in Discord.")
             return
         await self.config.guild(ctx.guild).mod_role.set(role.id)
         await ctx.send(f"Moderator role set to `{role_name}`.")
