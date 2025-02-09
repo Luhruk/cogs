@@ -1,0 +1,9 @@
+{
+    "author": ["Luhruk"],
+    "description": "A cog to manage syndicates and track points assigned by moderators.",
+    "install_msg": "Thank you for installing the Syndicate Points Cog! Use `[p]help SyndicatePoints` for available commands.",
+    "short": "Syndicate Points Tracker",
+    "requirements": [],
+    "tags": ["points", "syndicates", "moderation"],
+    "type": "COG"
+}
