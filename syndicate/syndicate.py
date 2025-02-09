@@ -1,8 +1,7 @@
 from redbot.core import commands, Config
 from redbot.core.bot import Red
+import discord
 from typing import Optional
-from discord.utils import get
-
 
 class SyndicatePoints(commands.Cog):
     """A cog to manage syndicates and track points assigned by moderators."""
@@ -10,14 +9,14 @@ class SyndicatePoints(commands.Cog):
     def __init__(self, bot: Red):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=1234567890)
-        self.config.register_guild(syndicates={}, mod_role=None)
+        self.config.register_guild(syndicates={}, mod_role=None, leaderboard_message=None)
     
     @commands.admin()
     @commands.guild_only()
     @commands.command()
     async def setmodrole(self, ctx, *, role_name: str):
         """Set the moderator role for this cog."""
-        role = get(ctx.guild.roles, name=role_name)
+        role = discord.utils.get(ctx.guild.roles, name=role_name)
         if not role:
             await ctx.send(f"Role `{role_name}` not found. Make sure you typed it exactly as it appears in Discord.")
             return
@@ -66,7 +65,7 @@ class SyndicatePoints(commands.Cog):
                 await ctx.send(f"Syndicate `{syndicate_name}` does not exist.")
                 return
             syndicates[syndicate_name] += points
-        await ctx.send(f"Added {points} points to `{syndicate_name}`. Total: {syndicates[syndicate_name]}")
+        await self.update_leaderboard(ctx)
     
     @is_moderator()
     @commands.guild_only()
@@ -78,7 +77,7 @@ class SyndicatePoints(commands.Cog):
                 await ctx.send(f"Syndicate `{syndicate_name}` does not exist.")
                 return
             syndicates[syndicate_name] -= points
-        await ctx.send(f"Removed {points} points from `{syndicate_name}`. Total: {syndicates[syndicate_name]}")
+        await self.update_leaderboard(ctx)
     
     @is_moderator()
     @commands.guild_only()
@@ -88,24 +87,36 @@ class SyndicatePoints(commands.Cog):
         async with self.config.guild(ctx.guild).syndicates() as syndicates:
             for syndicate in syndicates:
                 syndicates[syndicate] = 0
-        await ctx.send("All syndicate points have been reset to 0.")
+        await self.update_leaderboard(ctx)
+    
+    async def update_leaderboard(self, ctx):
+        """Update the embedded leaderboard message."""
+        syndicates = await self.config.guild(ctx.guild).syndicates()
+        if not syndicates:
+            return
+        sorted_syndicates = sorted(syndicates.items(), key=lambda x: x[1], reverse=True)
+        embed = discord.Embed(title="Syndicate Leaderboard", color=discord.Color.blue())
+        for name, points in sorted_syndicates:
+            embed.add_field(name=name, value=f"{points} points", inline=False)
+        
+        leaderboard_message_id = await self.config.guild(ctx.guild).leaderboard_message()
+        if leaderboard_message_id:
+            try:
+                message = await ctx.channel.fetch_message(leaderboard_message_id)
+                await message.edit(embed=embed)
+            except discord.NotFound:
+                leaderboard_message_id = None
+        
+        if not leaderboard_message_id:
+            message = await ctx.send(embed=embed)
+            await self.config.guild(ctx.guild).leaderboard_message.set(message.id)
     
     @commands.guild_only()
     @commands.command()
-    async def syndicatepoints(self, ctx, syndicate_name: Optional[str] = None):
-        """Check points of a syndicate or all syndicates."""
-        syndicates = await self.config.guild(ctx.guild).syndicates()
-        if syndicate_name:
-            if syndicate_name not in syndicates:
-                await ctx.send(f"Syndicate `{syndicate_name}` does not exist.")
-                return
-            await ctx.send(f"`{syndicate_name}` has {syndicates[syndicate_name]} points.")
-        else:
-            if not syndicates:
-                await ctx.send("No syndicates available.")
-                return
-            leaderboard = "\n".join(f"{name}: {points} points" for name, points in sorted(syndicates.items(), key=lambda x: x[1], reverse=True))
-            await ctx.send(f"**Syndicate Leaderboard:**\n{leaderboard}")
+    async def leaderboard(self, ctx):
+        """Post or update the syndicate leaderboard."""
+        await self.update_leaderboard(ctx)
+        await ctx.send("Leaderboard updated!")
 
 async def setup(bot: Red):
     await bot.add_cog(SyndicatePoints(bot))
