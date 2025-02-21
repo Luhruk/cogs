@@ -1,0 +1,12 @@
+{
+    "name": "RoleReminder",
+    "author": ["luhruk"],
+    "description": "Sends reminders when a user gains a specific role.",
+    "install_msg": "Thank you for installing RoleReminder! Use `[p]setreminderrole`, `[p]setreminderchannel`, `[p]setreminderdelay`, and `[p]setpingrole` to configure it.",
+    "required_cogs": [],
+    "requirements": [],
+    "tags": ["moderation", "reminders"],
+    "min_bot_version": "3.5.0",
+    "hidden": false,
+    "disabled": false
+}
